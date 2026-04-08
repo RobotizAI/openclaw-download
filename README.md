@@ -60,6 +60,9 @@ Estes são os requisitos mínimos recomendados para o Openclaw Office RobotizAI 
 
 ---
 
+#### ⚠️ Aviso
+O instalador substitui automaticamente arquivos no diretório `~/.openclaw`, caso já exista uma versão do openclaw instalada, será substituida automaticamente por um novo opeclaw.
+
 ## 🚀 Instalação Completa Automatizada
 
 #### 🐧 Linux Mint / Ubuntu / Debian
@@ -86,9 +89,6 @@ iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/ins
 ```
 
 ---
-
-#### ⚠️ Aviso
-O instalador substitui automaticamente arquivos no diretório `~/.openclaw`, caso já exista uma versão do openclaw instalada ela será substituida.
 
 ### ✅ Como o instalador funciona
 <details>
