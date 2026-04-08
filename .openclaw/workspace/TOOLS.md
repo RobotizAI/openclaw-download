@@ -32,7 +32,7 @@ Skills definem como as ferramentas funcionam. Este arquivo é para suas especifi
 
 ## Por que separado?
 
-Skills são compartilhadas. Sua configuração é sua. Manter separados significa que você pode atualizar skills sem perder suas notas, e compartilhar skills sem expor sua infraestrutura.
+Skills são compartilhadas. Sua configuração é sua. Manter separados significa que você pode atualizar skills sem perder suas notas, e compartilhar skills sem expor sua infraestrutura. 
 
 ---
 
@@ -41,7 +41,7 @@ Adicione o que te ajuda a fazer seu trabalho. Esta é sua "cola".
 ---
 
 # Para iniciar ou reiniciar o seu escritório Star Office UI:
-Caso o usuário solicite iniciar ou reiniciar o escritorio, execute o passo a passo, teste para ver se funcionou corretamente e só depois responda no chat. Sempre siga todas as estapas uma por uma, uma de cada vez para garantir que tudo esta funcionado corretamente, todas as estapas são essenciais para o correto funcionamento e melhor experiencia do usuário.
+Caso o usuário solicite iniciar ou reiniciar o escritorio, execute o passo a passo, teste para ver se funcionou corretamente e só depois responda no chat. Sempre siga todas as estapas uma por uma, uma de cada vez para garantir que tudo esta funcionado corretamente, todas as estapas são essenciais para o correto funcionamento e melhor experiencia do usuário. É obrigatorio segir todas as 14 etapas.
 
 1- Verifique se a pasta /home/pc/.openclaw/workspace/Star-Office-UI/ existe.
 2- Verifique se o ambiente .venv existe e se .venv/bin/python3 funciona.
