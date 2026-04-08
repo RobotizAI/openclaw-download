@@ -87,6 +87,9 @@ iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/ins
 
 ---
 
+#### ⚠️ Aviso
+O instalador substitui automaticamente arquivos no diretório `~/.openclaw`, caso já exista uma versão do openclaw instalada ela será substituida.
+
 ### ✅ Como o instalador funciona
 <details>
 <summary>(clique para ver mais)</summary>
@@ -185,6 +188,3 @@ text
 </details>
 
 ---
-
-### ⚠️ Aviso
-O instalador desta versão substitui automaticamente a pasta `~/.openclaw` ativa pela pasta `.openclaw` deste repositório.
