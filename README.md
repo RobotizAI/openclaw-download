@@ -53,15 +53,15 @@ Visite nossa **Loja Online** oficial em **https://RobotzAI.com/loja-openclaw** e
 Estes são os requisitos mínimos recomendados para o Openclaw Office RobotizAI funcionar na sua máquina (configurações superiores melhoram o desempenho consideravelmente).
 
 #### 🐧 Linux Mint / Ubuntu / Debian
-```
-  **🌐⚙️ VM (Virtualbox) com API:** Processador CPU 1 núcleos, 1GB RAM, GPU VRAM não obrigatorio (bom para rodar vários Openclaw Office RobotizAI ao mesmo tempo).<br>
+
+>  **🌐⚙️ VM (Virtualbox) com API:** Processador CPU 1 núcleos, 1GB RAM, GPU VRAM não obrigatorio (bom para rodar vários Openclaw Office RobotizAI ao mesmo tempo).<br>
 
   **💻⚙️ Local com API:** Processador 2 núcleos, 1GB RAM, GPU VRAM não obrigatorio (útil para rodar em notebook/pc antigo).<br>
 
   **🌐 VM (Virtualbox) sem API:** Processador 4 núcleos, 8GB RAM, GPU 8GB VRAM obrigatorio (bom para rodar vários Openclaw Office RobotizAI ao mesmo tempo em notebook/pc potente ou servidor externo zerando custos com tokens).<br>
 
   **💻 Local sem API:** Processador 4 núcleos, 8GB RAM, GPU 8GB VRAM obrigatorio (útil para rodar em notebook/pc ou servidor potente e zerar custos com tokens).<br>
-```
+
 
 #### 🪟 Windows
 ```
