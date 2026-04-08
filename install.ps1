@@ -20,7 +20,7 @@ $script:InstallSucceeded = $false
 function Show-Banner {
     Write-Host ''
     Write-Host ' ===================================================='
-    Write-Host '     OpenClaw RobotizAI Installer v79.2 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.3 - Windows'
     Write-Host ' ===================================================='
     Write-Host ''
 }
@@ -242,8 +242,11 @@ function Install-BasePackagesWindows {
 function Install-OrUpgrade-NodeWindows {
     $currentMajor = Get-NodeMajor
 
-    if ((Test-Command 'node') -and (Test-Command 'npm.cmd') -and $currentMajor -eq 24) {
-        Success ("Node {0} e npm {1} ja atendem ao requisito do Windows; pulando reinstalacao." -f (& node --version), (& npm.cmd --version))
+    if ((Test-Command 'node') -and (Test-Command 'npm.cmd') -and $currentMajor -ge 24) {
+        if ($currentMajor -ge 25) {
+            Warn-Message ("Node {0} detectado. O OpenClaw recomenda Node 24 no Windows; continuando com a versao atual." -f (& node --version))
+        }
+        Success ("Node {0} e npm {1} ja atendem ao requisito minimo; pulando reinstalacao." -f (& node --version), (& npm.cmd --version))
         return
     }
 
@@ -261,7 +264,7 @@ function Install-OrUpgrade-NodeWindows {
 
     Refresh-Path
 
-    if ((Get-NodeMajor) -ne 24 -and (Test-Command 'choco')) {
+    if ((Get-NodeMajor) -lt 24 -and (Test-Command 'choco')) {
         Info 'Tentando instalar/atualizar Node.js 24 LTS via Chocolatey...'
         try {
             if (Test-Command 'node') {
@@ -275,7 +278,7 @@ function Install-OrUpgrade-NodeWindows {
         }
     }
 
-    if ((Get-NodeMajor) -ne 24 -and (Test-Command 'scoop')) {
+    if ((Get-NodeMajor) -lt 24 -and (Test-Command 'scoop')) {
         Info 'Tentando instalar/atualizar Node.js 24 LTS via Scoop...'
         try {
             if (Test-Path (Join-Path $env:USERPROFILE 'scoop\apps\nodejs-lts')) {
@@ -293,8 +296,13 @@ function Install-OrUpgrade-NodeWindows {
         Fail 'Node.js ou npm nao foram encontrados apos a instalacao.'
     }
 
-    if ((Get-NodeMajor) -ne 24) {
-        Fail ("Node.js 24 LTS e obrigatorio neste instalador para Windows. Versao atual detectada: {0}" -f (& node --version))
+    $currentMajor = Get-NodeMajor
+    if ($currentMajor -lt 24) {
+        Fail ("Node.js 24 ou superior e obrigatorio neste instalador para Windows. Versao atual detectada: {0}" -f (& node --version))
+    }
+
+    if ($currentMajor -ge 25) {
+        Warn-Message ("Node {0} detectado. O OpenClaw recomenda Node 24 no Windows; continuando com a versao atual." -f (& node --version))
     }
 
     Success ("Node {0} e npm {1} instalados/verificados." -f (& node --version), (& npm.cmd --version))
