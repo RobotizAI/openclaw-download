@@ -614,17 +614,17 @@ try {
     } catch {
     }
     Write-Host ''
-    Write-Host '🤖 Comandos uteis:'
+    Write-Host '*Comandos uteis:'
     Write-Host '  openclaw onboard -> Configuracoes iniciais do openclaw'
     Write-Host '  openclaw gateway stop -> Finaliza o openclaw'
     Write-Host '  openclaw gateway start -> Inicia o openclaw'
     Write-Host '  openclaw gateway restart -> Reinicia o openclaw'
     Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrao'
     Write-Host ''
-    Write-Host '👉 Proximo comando, digite:'
+    Write-Host '-> Proximo comando, digite:'
     Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '👉 Depois que concluir as configuracoes inicias (com openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
+    Write-Host '-> Depois que concluir as configuracoes inicias (com openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
     Write-Host '  openclaw dashboard'
 }
 catch {
