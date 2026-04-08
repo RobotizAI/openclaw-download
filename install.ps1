@@ -20,7 +20,7 @@ $script:InstallSucceeded = $false
 function Show-Banner {
     Write-Host ''
     Write-Host ' ===================================================='
-    Write-Host '     OpenClaw RobotizAI Installer v79.5 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.6 - Windows'
     Write-Host ' ===================================================='
     Write-Host ''
 }
@@ -485,6 +485,39 @@ function Should-SkipSourceRelativePath {
     return $false
 }
 
+
+function Repair-WindowsOpenClawConfig {
+    $configPath = Join-Path $script:DestDir 'openclaw.json'
+    if (-not (Test-Path $configPath)) {
+        return
+    }
+
+    Info 'Reparando openclaw.json existente para Windows...'
+
+    $originalText = Get-Content -LiteralPath $configPath -Raw
+    $updatedText = $originalText
+
+    $updatedText = [regex]::Replace(
+        $updatedText,
+        '/home/[^/\r\n]+/\.openclaw/workspace',
+        '~/.openclaw/workspace'
+    )
+
+    $updatedText = [regex]::Replace(
+        $updatedText,
+        '/home/[^/\r\n]+/\.openclaw/extensions/openclaw-web-search',
+        '~/.openclaw/extensions/openclaw-web-search'
+    )
+
+    if ($updatedText -ne $originalText) {
+        Set-Content -LiteralPath $configPath -Value $updatedText -Encoding UTF8
+        Success 'openclaw.json reparado para Windows.'
+    }
+    else {
+        Success 'openclaw.json ja esta compativel com Windows.'
+    }
+}
+
 function Replace-WithRobotizaiBundle {
     if (-not (Test-Path $script:SourceDir)) {
         Fail 'A pasta de origem RobotizAI nao existe.'
@@ -535,6 +568,7 @@ function Replace-WithRobotizaiBundle {
     }
 
     Success "Arquivos RobotizAI copiados individualmente para $script:DestDir"
+    Repair-WindowsOpenClawConfig
 }
 
 function Get-GatewayStatusText {
@@ -781,10 +815,10 @@ try {
     Write-Host '  openclaw gateway restart -> Reinicia o openclaw'
     Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrao'
     Write-Host ''
-    Write-Host '-> Proximo comando, digite:'
+    Write-Host '-> Se precisar reconfigurar o OpenClaw, digite:'
     Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '-> Depois que concluir as configuracoes iniciais (openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
+    Write-Host '-> Para abrir o OpenClaw no navegador, digite:'
     Write-Host '  openclaw dashboard'
 }
 catch {
