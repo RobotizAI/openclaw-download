@@ -3,15 +3,7 @@ $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
 try {
-    [Console]::InputEncoding  = [System.Text.UTF8Encoding]::new($false)
-    [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-    $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
-    chcp 65001 > $null
-} catch {
-}
-
-try {
-    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force
+    Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass -Force | Out-Null
 } catch {
 }
 
@@ -27,9 +19,9 @@ $script:InstallSucceeded = $false
 
 function Show-Banner {
     Write-Host ''
-    Write-Host ' ====================================================' 
-    Write-Host '     OpenClaw RobotizAI Installer v79.1 - Windows'
-    Write-Host ' ====================================================' 
+    Write-Host ' ===================================================='
+    Write-Host '     OpenClaw RobotizAI Installer v79.2 - Windows'
+    Write-Host ' ===================================================='
     Write-Host ''
 }
 
@@ -82,18 +74,18 @@ function Refresh-Path {
     $parts = New-Object System.Collections.Generic.List[string]
 
     foreach ($segment in @($machinePath, $userPath, $env:Path)) {
-        if ([string]::IsNullOrWhiteSpace($segment)) { continue }
+        if ($null -eq $segment) {
+            continue
+        }
+
         foreach ($item in ($segment -split ';')) {
             if (-not [string]::IsNullOrWhiteSpace($item)) {
-                $trimmed = $item.Trim()
-                if (-not $parts.Contains($trimmed)) {
-                    [void]$parts.Add($trimmed)
-                }
+                $parts.Add($item.Trim())
             }
         }
     }
 
-    $env:Path = ($parts -join ';')
+    $env:Path = ($parts | Select-Object -Unique) -join ';'
 }
 
 function Test-Command {
@@ -103,8 +95,8 @@ function Test-Command {
 
 function Get-NodeMajor {
     if (Test-Command 'node') {
-        $v = (& node --version 2>$null)
-        if ($v -match '^v(\d+)') {
+        $version = (& node --version 2>$null)
+        if ($version -match '^v(\d+)') {
             return [int]$Matches[1]
         }
     }
@@ -117,106 +109,95 @@ function Test-IsAdministrator {
     return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 }
 
-function Install-WithWinget {
+function Assert-WingetAvailable {
+    if (-not (Test-Command 'winget')) {
+        Fail 'winget nao foi encontrado. No Windows, este instalador requer o Windows Package Manager para instalar dependencias automaticamente.'
+    }
+}
+
+function Resolve-WingetPackageId {
+    param([string[]]$Candidates)
+
+    foreach ($candidate in $Candidates) {
+        & winget show --id $candidate -e --source winget --accept-source-agreements | Out-Null
+        if ($LASTEXITCODE -eq 0) {
+            return $candidate
+        }
+    }
+
+    return $null
+}
+
+function Install-WingetPackage {
     param(
-        [string[]]$Ids,
-        [string]$DisplayName
+        [string]$PackageId,
+        [switch]$TryUpgradeFirst
     )
 
-    if (-not (Test-Command 'winget')) { return $false }
-
-    foreach ($id in $Ids) {
-        $args = @(
-            'install', '--id', $id, '-e', '--source', 'winget',
+    if ($TryUpgradeFirst) {
+        $upgradeArgs = @(
+            'upgrade', '--id', $PackageId, '-e', '--source', 'winget',
             '--accept-package-agreements', '--accept-source-agreements', '--silent'
         )
         if (Test-IsAdministrator) {
-            $args += @('--scope', 'machine')
+            $upgradeArgs += @('--scope', 'machine')
         }
 
-        & winget @args
+        & winget @upgradeArgs
         if ($LASTEXITCODE -eq 0) {
             Refresh-Path
             return $true
         }
     }
 
-    return $false
-}
-
-function Install-WithChoco {
-    param(
-        [string[]]$Packages,
-        [string]$DisplayName
+    $installArgs = @(
+        'install', '--id', $PackageId, '-e', '--source', 'winget',
+        '--accept-package-agreements', '--accept-source-agreements', '--silent'
     )
-
-    if (-not (Test-Command 'choco')) { return $false }
-
-    foreach ($pkg in $Packages) {
-        & choco install $pkg -y --no-progress
-        if ($LASTEXITCODE -eq 0) {
-            Refresh-Path
-            return $true
-        }
+    if (Test-IsAdministrator) {
+        $installArgs += @('--scope', 'machine')
     }
 
-    return $false
+    & winget @installArgs
+    Refresh-Path
+    return ($LASTEXITCODE -eq 0)
 }
 
-function Install-WithScoop {
-    param(
-        [string[]]$Packages,
-        [string]$DisplayName
-    )
-
-    if (-not (Test-Command 'scoop')) { return $false }
-
-    foreach ($pkg in $Packages) {
-        & scoop install $pkg
-        if ($LASTEXITCODE -eq 0) {
-            Refresh-Path
-            return $true
-        }
-    }
-
-    return $false
-}
-
-function Install-PackageIfMissing {
+function Install-WingetPackageIfMissing {
     param(
         [string]$CommandName,
-        [string]$DisplayName,
-        [string[]]$WingetIds,
-        [string[]]$ChocoPackages,
-        [string[]]$ScoopPackages
+        [string[]]$PackageCandidates,
+        [string]$DisplayName
     )
 
     if (Test-Command $CommandName) {
         return
     }
 
-    Info "Instalando $DisplayName..."
+    Assert-WingetAvailable
+    $packageId = Resolve-WingetPackageId -Candidates $PackageCandidates
+    if (-not $packageId) {
+        Fail "Nao foi possivel localizar um pacote winget valido para $DisplayName."
+    }
 
-    if (Install-WithWinget -Ids $WingetIds -DisplayName $DisplayName) { return }
-    if (Install-WithChoco -Packages $ChocoPackages -DisplayName $DisplayName) { return }
-    if (Install-WithScoop -Packages $ScoopPackages -DisplayName $DisplayName) { return }
+    Info "Instalando $DisplayName via winget ($packageId)..."
+    if (-not (Install-WingetPackage -PackageId $packageId)) {
+        Fail "Falha ao instalar $DisplayName via winget."
+    }
 
-    Fail "Nao foi possivel instalar $DisplayName automaticamente. Instale manualmente e execute novamente."
+    if (-not (Test-Command $CommandName)) {
+        Fail "$DisplayName nao foi encontrado apos a instalacao."
+    }
 }
 
 function Prepare-Source {
-    if (Test-Path (Join-Path $script:TmpDir '.git')) {
-        Info 'Repositorio temporario ja existe; atualizando...'
-        & git -C $script:TmpDir fetch --depth 1 origin
-        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao atualizar o repositorio temporario.' }
-        & git -C $script:TmpDir reset --hard origin/HEAD
-        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao resetar o repositorio temporario.' }
-    } else {
-        if (Test-Path $script:TmpDir) {
-            Remove-Item -LiteralPath $script:TmpDir -Recurse -Force
-        }
-        & git clone --depth 1 $script:RepoUrl $script:TmpDir
-        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao clonar o repositorio RobotizAI.' }
+    if (Test-Path $script:TmpDir) {
+        Remove-Item -LiteralPath $script:TmpDir -Recurse -Force
+    }
+
+    & git clone --depth 1 $script:RepoUrl $script:TmpDir
+    if ($LASTEXITCODE -ne 0) {
+        Fail 'Falha ao clonar o repositorio RobotizAI.'
     }
 
     $candidateA = Join-Path $script:TmpDir '.openclaw'
@@ -224,9 +205,11 @@ function Prepare-Source {
 
     if (Test-Path $candidateA) {
         $script:SourceDir = $candidateA
-    } elseif (Test-Path $candidateB) {
+    }
+    elseif (Test-Path $candidateB) {
         $script:SourceDir = $candidateB
-    } else {
+    }
+    else {
         Fail 'Nenhuma pasta .openclaw foi encontrada no repositorio.'
     }
 
@@ -234,92 +217,108 @@ function Prepare-Source {
 }
 
 function Install-BasePackagesWindows {
-    Install-PackageIfMissing -CommandName 'git' -DisplayName 'Git' -WingetIds @('Git.Git') -ChocoPackages @('git') -ScoopPackages @('git')
+    Install-WingetPackageIfMissing -CommandName 'git' -PackageCandidates @('Git.Git') -DisplayName 'Git'
 
     if (-not (Test-Command 'python') -and -not (Test-Command 'py')) {
-        Info 'Instalando Python 3...'
-        $installed = $false
-        $installed = Install-WithWinget -Ids @('Python.Python.3.13', 'Python.Python.3.12', 'Python.Python.3.11') -DisplayName 'Python 3'
-        if (-not $installed) { $installed = Install-WithChoco -Packages @('python') -DisplayName 'Python 3' }
-        if (-not $installed) { $installed = Install-WithScoop -Packages @('python') -DisplayName 'Python 3' }
-        if (-not $installed) {
-            Fail 'Nao foi possivel instalar Python 3 automaticamente. Instale manualmente e execute novamente.'
+        Assert-WingetAvailable
+        $pythonPackageId = Resolve-WingetPackageId -Candidates @('Python.Python.3.13', 'Python.Python.3.12', 'Python.Python.3.11')
+        if (-not $pythonPackageId) {
+            Fail 'Nao foi possivel localizar um pacote winget valido para Python 3.'
         }
-        Refresh-Path
-    }
 
-    if (-not (Test-Command 'python') -and -not (Test-Command 'py')) {
-        Fail 'Python 3 nao foi encontrado apos a instalacao.'
+        Info "Instalando Python 3 via winget ($pythonPackageId)..."
+        if (-not (Install-WingetPackage -PackageId $pythonPackageId)) {
+            Fail 'Falha ao instalar Python 3 via winget.'
+        }
+
+        if (-not (Test-Command 'python') -and -not (Test-Command 'py')) {
+            Fail 'Python 3 nao foi encontrado apos a instalacao.'
+        }
     }
 
     Success 'Dependencias base instaladas/verificadas.'
 }
 
-function Resolve-NpmCmd {
-    Refresh-Path
-    $cmd = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
-    if ($cmd) { return $cmd.Source }
-
-    $candidate = Join-Path ${env:ProgramFiles} 'nodejs\npm.cmd'
-    if (Test-Path $candidate) { return $candidate }
-
-    $candidateX86 = Join-Path ${env:ProgramFiles(x86)} 'nodejs\npm.cmd'
-    if (Test-Path $candidateX86) { return $candidateX86 }
-
-    return $null
-}
-
 function Install-OrUpgrade-NodeWindows {
     $currentMajor = Get-NodeMajor
-    $npmCmd = Resolve-NpmCmd
 
-    if ((Test-Command 'node') -and $npmCmd -and $currentMajor -ge 24) {
-        Success ("Node {0} e npm {1} ja atendem ao requisito minimo; pulando reinstalacao." -f (& node --version), (& $npmCmd --version))
+    if ((Test-Command 'node') -and (Test-Command 'npm.cmd') -and $currentMajor -eq 24) {
+        Success ("Node {0} e npm {1} ja atendem ao requisito do Windows; pulando reinstalacao." -f (& node --version), (& npm.cmd --version))
         return
     }
 
-    Info 'Instalando/atualizando Node.js 24+...'
+    Info 'Garantindo Node.js 24 LTS no Windows...'
 
-    $installed = $false
-    $installed = Install-WithWinget -Ids @('OpenJS.NodeJS.LTS', 'OpenJS.NodeJS') -DisplayName 'Node.js'
-    if (-not $installed) { $installed = Install-WithChoco -Packages @('nodejs-lts', 'nodejs') -DisplayName 'Node.js' }
-    if (-not $installed) { $installed = Install-WithScoop -Packages @('nodejs-lts', 'nodejs') -DisplayName 'Node.js' }
-    if (-not $installed) {
-        Fail 'Nao foi possivel instalar Node.js automaticamente. Instale manualmente e execute novamente.'
+    $nodeReady = $false
+
+    if (Test-Command 'winget') {
+        $packageId = Resolve-WingetPackageId -Candidates @('OpenJS.NodeJS.LTS')
+        if ($packageId) {
+            Info "Tentando instalar/atualizar Node.js via winget ($packageId)..."
+            $nodeReady = Install-WingetPackage -PackageId $packageId -TryUpgradeFirst
+        }
     }
 
     Refresh-Path
-    $npmCmd = Resolve-NpmCmd
 
-    if (-not (Test-Command 'node') -or -not $npmCmd) {
+    if ((Get-NodeMajor) -ne 24 -and (Test-Command 'choco')) {
+        Info 'Tentando instalar/atualizar Node.js 24 LTS via Chocolatey...'
+        try {
+            if (Test-Command 'node') {
+                & choco upgrade nodejs-lts -y | Out-Host
+            } else {
+                & choco install nodejs-lts -y | Out-Host
+            }
+            Refresh-Path
+            $nodeReady = $true
+        } catch {
+        }
+    }
+
+    if ((Get-NodeMajor) -ne 24 -and (Test-Command 'scoop')) {
+        Info 'Tentando instalar/atualizar Node.js 24 LTS via Scoop...'
+        try {
+            if (Test-Path (Join-Path $env:USERPROFILE 'scoop\apps\nodejs-lts')) {
+                & scoop update nodejs-lts | Out-Host
+            } else {
+                & scoop install nodejs-lts | Out-Host
+            }
+            Refresh-Path
+            $nodeReady = $true
+        } catch {
+        }
+    }
+
+    if (-not (Test-Command 'node') -or -not (Test-Command 'npm.cmd')) {
         Fail 'Node.js ou npm nao foram encontrados apos a instalacao.'
     }
 
-    if ((Get-NodeMajor) -lt 24) {
-        Fail ('A versao instalada do Node ({0}) e inferior a 24.' -f (& node --version))
+    if ((Get-NodeMajor) -ne 24) {
+        Fail ("Node.js 24 LTS e obrigatorio neste instalador para Windows. Versao atual detectada: {0}" -f (& node --version))
     }
 
-    Success ("Node {0} e npm {1} instalados/verificados." -f (& node --version), (& $npmCmd --version))
+    Success ("Node {0} e npm {1} instalados/verificados." -f (& node --version), (& npm.cmd --version))
 }
 
-function OpenClaw-IsOfficialCli {
+function Resolve-NpmCmd {
     Refresh-Path
 
-    $cmd = Get-Command 'openclaw.cmd' -ErrorAction SilentlyContinue
-    if (-not $cmd) {
-        $cmd = Get-Command 'openclaw' -ErrorAction SilentlyContinue
+    $cmd = Get-Command 'npm.cmd' -ErrorAction SilentlyContinue
+    if ($cmd) {
+        return $cmd.Source
     }
-    if (-not $cmd) { return $false }
 
-    $resolved = $cmd.Source
-    if ($resolved -like "$HOME\.openclaw*") { return $false }
-
-    try {
-        & $resolved --version | Out-Null
-        return $true
-    } catch {
-        return $false
+    $candidate = Join-Path $env:ProgramFiles 'nodejs\npm.cmd'
+    if (Test-Path $candidate) {
+        return $candidate
     }
+
+    $candidateX86 = Join-Path ${env:ProgramFiles(x86)} 'nodejs\npm.cmd'
+    if ($candidateX86 -and (Test-Path $candidateX86)) {
+        return $candidateX86
+    }
+
+    return $null
 }
 
 function Resolve-OpenClawCommand {
@@ -334,39 +333,65 @@ function Resolve-OpenClawCommand {
 
     $npmCmd = Resolve-NpmCmd
     if ($npmCmd) {
-        $npmPrefix = (& $npmCmd prefix -g 2>$null)
-        if ($npmPrefix) {
-            foreach ($candidate in @(
-                (Join-Path $npmPrefix 'openclaw.cmd'),
-                (Join-Path $npmPrefix 'openclaw.ps1'),
-                (Join-Path $npmPrefix 'openclaw')
-            )) {
-                if (Test-Path $candidate) {
-                    return $candidate
+        try {
+            $npmPrefix = (& $npmCmd prefix -g 2>$null)
+            if ($npmPrefix) {
+                foreach ($candidate in @(
+                    (Join-Path $npmPrefix 'openclaw.cmd'),
+                    (Join-Path $npmPrefix 'openclaw')
+                )) {
+                    if (Test-Path $candidate) {
+                        return $candidate
+                    }
                 }
             }
+        } catch {
         }
     }
 
     return $null
 }
 
+function OpenClaw-IsOfficialCli {
+    $resolved = Resolve-OpenClawCommand
+    if (-not $resolved) {
+        return $false
+    }
+
+    if ($resolved -like "$HOME\.openclaw*") {
+        return $false
+    }
+
+    try {
+        & $resolved --version | Out-Null
+        return ($LASTEXITCODE -eq 0)
+    } catch {
+        return $false
+    }
+}
+
 function Install-OfficialOpenClaw {
     if (OpenClaw-IsOfficialCli) {
         $script:OpenClawCmd = Resolve-OpenClawCommand
         Success "CLI oficial do OpenClaw ja esta instalada em: $script:OpenClawCmd; pulando reinstalacao."
-        try { & $script:OpenClawCmd --version | Out-Host } catch {}
+        try {
+            & $script:OpenClawCmd --version | Out-Host
+        } catch {
+        }
         return
     }
 
     $npmCmd = Resolve-NpmCmd
     if (-not $npmCmd) {
-        Fail 'npm.cmd nao foi encontrado.'
+        Fail 'npm.cmd nao foi encontrado apos a instalacao do Node.js.'
     }
 
     Info 'Instalando OpenClaw oficial com npm install -g openclaw@latest...'
 
-    try { & $npmCmd cache verify *> $null } catch {}
+    try {
+        & $npmCmd cache verify | Out-Null
+    } catch {
+    }
 
     $env:npm_config_loglevel = 'warn'
     $env:npm_config_fund = 'false'
@@ -385,14 +410,22 @@ function Install-OfficialOpenClaw {
         Fail 'O comando openclaw nao foi encontrado apos a instalacao oficial.'
     }
 
+    if ($script:OpenClawCmd -like "$HOME\.openclaw*") {
+        Fail 'O comando openclaw ainda esta apontando para a instalacao antiga em ~/.openclaw.'
+    }
+
     Success "CLI oficial encontrada em: $script:OpenClawCmd"
-    try { & $script:OpenClawCmd --version | Out-Host } catch {}
+    try {
+        & $script:OpenClawCmd --version | Out-Host
+    } catch {
+    }
 }
 
 function Stage-PreviousInstall {
     if (Test-Path $script:DestDir) {
         Success "Instalacao atual detectada em $script:DestDir; os arquivos serao substituidos individualmente sem apagar a pasta inteira."
-    } else {
+    }
+    else {
         Success "Nenhuma instalacao anterior em $script:DestDir; a estrutura oficial sera criada na proxima etapa."
     }
 }
@@ -405,9 +438,6 @@ function Initialize-OfficialHome {
 
     if (-not $script:OpenClawCmd) {
         $script:OpenClawCmd = Resolve-OpenClawCommand
-    }
-    if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw nao foi encontrado antes do setup.'
     }
 
     Info 'Inicializando a pasta oficial ~/.openclaw com openclaw setup...'
@@ -423,100 +453,187 @@ function Initialize-OfficialHome {
     Success "Pasta oficial criada com sucesso em $script:DestDir"
 }
 
+function Should-SkipSourceRelativePath {
+    param([string]$RelativePath)
+
+    $rel = ($RelativePath -replace '/', '\').TrimStart('\')
+    $skipPrefixes = @(
+        'openclaw.json',
+        'browser',
+        'completions',
+        'canvas',
+        'devices',
+        'exec-approvals.json',
+        'update-check.json',
+        'cron\runs'
+    )
+
+    foreach ($prefix in $skipPrefixes) {
+        if ($rel -ieq $prefix -or $rel -like ($prefix + '\*')) {
+            return $true
+        }
+    }
+
+    return $false
+}
+
 function Replace-WithRobotizaiBundle {
-    if (-not (Test-Path $script:SourceDir)) { Fail 'A pasta de origem RobotizAI nao existe.' }
-    if (-not (Test-Path $script:DestDir)) { Fail 'A pasta de destino ~/.openclaw nao existe.' }
+    if (-not (Test-Path $script:SourceDir)) {
+        Fail 'A pasta de origem RobotizAI nao existe.'
+    }
+
+    if (-not (Test-Path $script:DestDir)) {
+        Fail 'A pasta de destino ~/.openclaw nao existe.'
+    }
 
     Info 'Substituindo os arquivos da ~/.openclaw pela versao RobotizAI do GitHub...'
 
-    $robocopy = Get-Command 'robocopy.exe' -ErrorAction SilentlyContinue
-    if ($robocopy) {
-        & $robocopy.Source $script:SourceDir $script:DestDir /E /R:2 /W:1 /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Null
-        $code = $LASTEXITCODE
-        if ($code -gt 7) {
-            Fail "A atualizacao dos arquivos RobotizAI falhou (robocopy exit code $code)."
-        }
-    } else {
-        $directories = Get-ChildItem -LiteralPath $script:SourceDir -Force -Recurse -Directory
-        foreach ($dir in $directories) {
-            $relative = $dir.FullName.Substring($script:SourceDir.Length).TrimStart('\\')
-            $targetDir = Join-Path $script:DestDir $relative
-            if ((Test-Path $targetDir) -and -not (Test-Path $targetDir -PathType Container)) {
-                Remove-Item -LiteralPath $targetDir -Recurse -Force
-            }
-            if (-not (Test-Path $targetDir)) {
-                New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-            }
+    $items = Get-ChildItem -LiteralPath $script:SourceDir -Force -Recurse
+
+    foreach ($item in $items) {
+        $relativePath = $item.FullName.Substring($script:SourceDir.Length).TrimStart('\')
+        if ([string]::IsNullOrWhiteSpace($relativePath)) {
+            continue
         }
 
-        $files = Get-ChildItem -LiteralPath $script:SourceDir -Force -Recurse -File
-        foreach ($file in $files) {
-            $relative = $file.FullName.Substring($script:SourceDir.Length).TrimStart('\\')
-            $targetFile = Join-Path $script:DestDir $relative
-            $targetParent = Split-Path -Parent $targetFile
-            if (-not (Test-Path $targetParent)) {
-                New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
-            }
-            if ((Test-Path $targetFile) -and (Test-Path $targetFile -PathType Container)) {
-                Remove-Item -LiteralPath $targetFile -Recurse -Force
-            }
-            Copy-Item -LiteralPath $file.FullName -Destination $targetFile -Force
+        if (Should-SkipSourceRelativePath -RelativePath $relativePath) {
+            continue
         }
+
+        $targetPath = Join-Path $script:DestDir $relativePath
+
+        if ($item.PSIsContainer) {
+            if ((Test-Path $targetPath) -and (-not (Get-Item -LiteralPath $targetPath).PSIsContainer)) {
+                Remove-Item -LiteralPath $targetPath -Recurse -Force
+            }
+            New-Item -ItemType Directory -Path $targetPath -Force | Out-Null
+            continue
+        }
+
+        $targetParent = Split-Path -Parent $targetPath
+        if (-not [string]::IsNullOrWhiteSpace($targetParent)) {
+            New-Item -ItemType Directory -Path $targetParent -Force | Out-Null
+        }
+
+        if ((Test-Path $targetPath) -and (Get-Item -LiteralPath $targetPath).PSIsContainer) {
+            Remove-Item -LiteralPath $targetPath -Recurse -Force
+        }
+
+        Copy-Item -LiteralPath $item.FullName -Destination $targetPath -Force
+    }
+
+    if (-not (Test-Path $script:DestDir)) {
+        Fail 'A atualizacao dos arquivos RobotizAI falhou.'
     }
 
     Success "Arquivos RobotizAI copiados individualmente para $script:DestDir"
 }
 
-function Gateway-IsRunning {
-    if (-not $script:OpenClawCmd) { return $false }
-    $tmp = Join-Path $env:TEMP 'openclaw-gateway-status.log'
+function Get-GatewayStatusText {
+    if (-not $script:OpenClawCmd) {
+        return ''
+    }
+
     try {
-        & $script:OpenClawCmd gateway status *> $tmp
-        if ($LASTEXITCODE -ne 0) { return $false }
-        $content = Get-Content -LiteralPath $tmp -Raw -ErrorAction SilentlyContinue
-        return $content -match '(?i)running|online|connected|ok|healthy|ativo'
+        $jsonOutput = & $script:OpenClawCmd gateway status --json 2>&1 | Out-String
+        if (-not [string]::IsNullOrWhiteSpace($jsonOutput)) {
+            return $jsonOutput.Trim()
+        }
     } catch {
+    }
+
+    try {
+        $textOutput = & $script:OpenClawCmd gateway status 2>&1 | Out-String
+        if (-not [string]::IsNullOrWhiteSpace($textOutput)) {
+            return $textOutput.Trim()
+        }
+    } catch {
+    }
+
+    return ''
+}
+
+function Gateway-IsRunning {
+    $statusText = Get-GatewayStatusText
+    if ([string]::IsNullOrWhiteSpace($statusText)) {
         return $false
     }
+
+    if ($statusText -match '"(running|online|connected|healthy)"\s*:\s*true') {
+        return $true
+    }
+
+    if ($statusText -match '"status"\s*:\s*"(running|online|healthy|ok)"') {
+        return $true
+    }
+
+    if ($statusText -match '(?i)\brunning\b|\bonline\b|\bconnected\b|\bhealthy\b|\bok\b|\bativo\b') {
+        return $true
+    }
+
+    return $false
 }
 
 function Restart-Gateway {
     if (-not $script:OpenClawCmd) {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
-    if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw nao foi encontrado antes de reiniciar o gateway.'
-    }
 
     if (Gateway-IsRunning) {
         Info 'Gateway ja esta ativo; reiniciando para aplicar a versao RobotizAI...'
-    } else {
+    }
+    else {
         Info 'Gateway nao esta ativo; iniciando/reiniciando...'
     }
 
-    & $script:OpenClawCmd gateway restart
-    if ($LASTEXITCODE -ne 0) {
-        Fail 'Falha ao reiniciar o gateway do OpenClaw.'
+    try {
+        & $script:OpenClawCmd gateway restart | Out-Host
+    } catch {
     }
 
-    Success 'Gateway reiniciado.'
+    Start-Sleep -Seconds 3
+
+    if (Gateway-IsRunning) {
+        Success 'Gateway reiniciado.'
+        return
+    }
+
+    Warn-Message 'Gateway nao ficou ativo apos o restart. Tentando instalar/atualizar o servico...'
+
+    try {
+        & $script:OpenClawCmd gateway install --force | Out-Host
+    } catch {
+    }
+
+    Start-Sleep -Seconds 2
+
+    try {
+        & $script:OpenClawCmd gateway restart | Out-Host
+    } catch {
+    }
+
+    Start-Sleep -Seconds 3
+
+    if (Gateway-IsRunning) {
+        Success 'Gateway reiniciado.'
+    }
+    else {
+        Warn-Message 'Gateway ainda nao esta ativo. No Windows nativo isso pode exigir PowerShell como Administrador ou uso de openclaw gateway run.'
+    }
 }
 
 function Onboard-AlreadyDone {
-    return (Test-Path $script:DestDir) -and (Test-Path (Join-Path $script:DestDir 'openclaw.json'))
+    return (Test-Path (Join-Path $script:DestDir 'openclaw.json'))
 }
 
 function Run-Onboard {
-    if (-not $script:OpenClawCmd) {
-        $script:OpenClawCmd = Resolve-OpenClawCommand
-    }
-    if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw nao foi encontrado antes do onboard.'
-    }
-
     if (Onboard-AlreadyDone) {
         Success 'Estrutura principal do OpenClaw ja existe; pulando nova execucao do onboard.'
         return
+    }
+
+    if (-not $script:OpenClawCmd) {
+        $script:OpenClawCmd = Resolve-OpenClawCommand
     }
 
     Info 'Executando openclaw onboard automaticamente...'
@@ -524,15 +641,16 @@ function Run-Onboard {
     if ($LASTEXITCODE -ne 0) {
         Fail 'O onboarding do OpenClaw falhou.'
     }
+
     Success 'Onboarding concluido.'
 }
 
 function Dashboard-AlreadyRunning {
     try {
-        $processes = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+        $matches = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
             $_.CommandLine -and $_.CommandLine -match 'openclaw(\.cmd)?\s+dashboard'
         }
-        return $null -ne $processes
+        return ($matches | Measure-Object).Count -gt 0
     } catch {
         return $false
     }
@@ -542,9 +660,6 @@ function Open-Dashboard {
     if (-not $script:OpenClawCmd) {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
-    if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw nao foi encontrado antes de abrir o dashboard.'
-    }
 
     Info 'Abrindo o dashboard do OpenClaw...'
 
@@ -553,11 +668,12 @@ function Open-Dashboard {
         return
     }
 
+    $escapedOpenClawCmd = $script:OpenClawCmd.Replace("'", "''")
     Start-Process -FilePath 'powershell.exe' -ArgumentList @(
         '-NoProfile',
         '-ExecutionPolicy', 'Bypass',
         '-Command',
-        "& '$($script:OpenClawCmd.Replace("'", "''"))' dashboard"
+        "& '$escapedOpenClawCmd' dashboard"
     ) | Out-Null
 
     Start-Sleep -Seconds 8
@@ -609,22 +725,24 @@ try {
     Success 'Instalacao concluida com sucesso!'
     Write-Host ''
     Write-Host ("OpenClaw oficial instalado: {0}" -f $script:OpenClawCmd)
+
     try {
         Write-Host ("Versao do OpenClaw: {0}" -f (& $script:OpenClawCmd --version))
     } catch {
     }
+
     Write-Host ''
-    Write-Host '*Comandos uteis:'
+    Write-Host 'Comandos uteis:'
     Write-Host '  openclaw onboard -> Configuracoes iniciais do openclaw'
     Write-Host '  openclaw gateway stop -> Finaliza o openclaw'
     Write-Host '  openclaw gateway start -> Inicia o openclaw'
     Write-Host '  openclaw gateway restart -> Reinicia o openclaw'
     Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrao'
     Write-Host ''
-    Write-Host '-> Proximo comando, digite:'
+    Write-Host 'Proximo comando, digite:'
     Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '-> Depois que concluir as configuracoes inicias (com openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
+    Write-Host 'Depois que concluir as configuracoes iniciais (com openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
     Write-Host '  openclaw dashboard'
 }
 catch {
