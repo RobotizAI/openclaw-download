@@ -35,6 +35,12 @@ Visite nossa **Loja Online** oficial em **https://RobotzAI.com/loja** e veja tod
 ![Screenshot Escritório Lobster (snowing)](Screenshots/Lobster%20(snowing)%20-%20Openclaw%20Office%20RobotizAI.jpeg)
 </details>
 
+<details>
+<summary>🏠 Clique para ver a casa do Goku</summary><br>
+  
+![Screenshot Escritório Lobster (snowing)](Screenshots/Goku%20(dragonball%20z)%20-%20Openclaw%20Office%20RobotizAI.jpeg)
+</details>
+
 ---
 
 #### 📑 Requisitos mínimos para rodar o Openclaw Office RobotizAI 
