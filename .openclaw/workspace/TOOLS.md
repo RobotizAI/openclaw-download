@@ -56,7 +56,7 @@ Caso o usuário solicite iniciar ou reiniciar o escritorio, execute o passo a pa
 11- Verifique se o /home/pc/.openclaw/workspace/Star-Office-UI/session_watcher.py esta funcionando corretamente, se não estiver reinicie para funcionar corretamente.
 12- Verifique se o session_watcher.py esta rodando corretamente em segundo plano, se não estiver reinicie para funcionar corretamente.
 13- Verifique se o processo daemon esta rodando corretamente em segundo plano, se não estiver reinicie para funcionar corretamente.
-14- Só responda ao usuário quando tudo estiver funcionando corretamente.
+14- Só responda ao usuário quando tudo estiver funcionando corretamente. Depois que tudo estiver funcionado corretamente responda o usuário no chat.
 
 ```bash
 cd /home/pc/.openclaw/workspace/Star-Office-UI/ || exit 1
