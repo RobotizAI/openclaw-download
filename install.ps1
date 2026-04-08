@@ -20,7 +20,7 @@ $script:InstallSucceeded = $false
 function Show-Banner {
     Write-Host ''
     Write-Host ' ===================================================='
-    Write-Host '     OpenClaw RobotizAI Installer v79.4 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.5 - Windows'
     Write-Host ' ===================================================='
     Write-Host ''
 }
@@ -665,7 +665,7 @@ function Dashboard-AlreadyRunning {
 }
 
 function Get-DashboardUrl {
-    $host = '127.0.0.1'
+    $dashboardHost = '127.0.0.1'
     $port = '18789'
     $configPath = Join-Path $script:DestDir 'openclaw.json'
 
@@ -682,10 +682,10 @@ function Get-DashboardUrl {
                     $bind = [string]$config.gateway.bind
 
                     if ($bind -match '^(loopback|localhost|127\.0\.0\.1)$') {
-                        $host = '127.0.0.1'
+                        $dashboardHost = '127.0.0.1'
                     }
                     elseif ($bind -notmatch '^(0\.0\.0\.0|\*|all)$') {
-                        $host = $bind
+                        $dashboardHost = $bind
                     }
                 }
             }
@@ -693,7 +693,7 @@ function Get-DashboardUrl {
         }
     }
 
-    return ("http://{0}:{1}/" -f $host, $port)
+    return ("http://{0}:{1}/" -f $dashboardHost, $port)
 }
 
 function Open-Dashboard {
