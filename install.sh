@@ -17,7 +17,7 @@ BAR_WIDTH=34
 banner() {
   echo ""
   echo " ╔════════════════════════════════════════════╗"
-  echo " ║      OpenClaw RobotizAI Installer v79     ║"
+  echo " ║      OpenClaw RobotizAI Installer v79      ║"
   echo " ╚════════════════════════════════════════════╝"
   echo ""
 }
