@@ -8,7 +8,7 @@ Este sistema utiliza o OpenClaw oficial e o Star Office UI como base para interf
 ### 🛒 Loja - Personagens e Escritórios
 O Openclaw Office Robotizai vem com **3 personagens** e **4 escritórios/casas** (Vera, Antonio e Lobster) padrão para você escolher!<br>
 Na nossa Loja Online você vai encontrar outros personagens, escritorios/casas para download como por exemplo o **Goku (Dragon Ball Z)**.<br>
-Visite nossa **Loja Online** oficial em **https://RobotzAI.com/loja** e veja todas as opções.<br>
+Visite nossa **Loja Online** oficial em **https://RobotzAI.com/loja-openclaw** e veja todas as opções.<br>
 
 ---
 <details open>
