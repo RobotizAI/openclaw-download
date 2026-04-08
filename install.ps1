@@ -28,7 +28,7 @@ $script:InstallSucceeded = $false
 function Show-Banner {
     Write-Host ''
     Write-Host ' ====================================================' 
-    Write-Host '     OpenClaw RobotizAI Installer v79 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.1 - Windows'
     Write-Host ' ====================================================' 
     Write-Host ''
 }
@@ -201,22 +201,22 @@ function Install-PackageIfMissing {
     if (Install-WithChoco -Packages $ChocoPackages -DisplayName $DisplayName) { return }
     if (Install-WithScoop -Packages $ScoopPackages -DisplayName $DisplayName) { return }
 
-    Fail "Não foi possível instalar $DisplayName automaticamente. Instale manualmente e execute novamente."
+    Fail "Nao foi possivel instalar $DisplayName automaticamente. Instale manualmente e execute novamente."
 }
 
 function Prepare-Source {
     if (Test-Path (Join-Path $script:TmpDir '.git')) {
-        Info 'Repositório temporário já existe; atualizando...'
+        Info 'Repositorio temporario ja existe; atualizando...'
         & git -C $script:TmpDir fetch --depth 1 origin
-        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao atualizar o repositório temporário.' }
+        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao atualizar o repositorio temporario.' }
         & git -C $script:TmpDir reset --hard origin/HEAD
-        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao resetar o repositório temporário.' }
+        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao resetar o repositorio temporario.' }
     } else {
         if (Test-Path $script:TmpDir) {
             Remove-Item -LiteralPath $script:TmpDir -Recurse -Force
         }
         & git clone --depth 1 $script:RepoUrl $script:TmpDir
-        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao clonar o repositório RobotizAI.' }
+        if ($LASTEXITCODE -ne 0) { Fail 'Falha ao clonar o repositorio RobotizAI.' }
     }
 
     $candidateA = Join-Path $script:TmpDir '.openclaw'
@@ -227,7 +227,7 @@ function Prepare-Source {
     } elseif (Test-Path $candidateB) {
         $script:SourceDir = $candidateB
     } else {
-        Fail 'Nenhuma pasta .openclaw foi encontrada no repositório.'
+        Fail 'Nenhuma pasta .openclaw foi encontrada no repositorio.'
     }
 
     Success "Pacote RobotizAI localizado em: $script:SourceDir"
@@ -243,16 +243,16 @@ function Install-BasePackagesWindows {
         if (-not $installed) { $installed = Install-WithChoco -Packages @('python') -DisplayName 'Python 3' }
         if (-not $installed) { $installed = Install-WithScoop -Packages @('python') -DisplayName 'Python 3' }
         if (-not $installed) {
-            Fail 'Não foi possível instalar Python 3 automaticamente. Instale manualmente e execute novamente.'
+            Fail 'Nao foi possivel instalar Python 3 automaticamente. Instale manualmente e execute novamente.'
         }
         Refresh-Path
     }
 
     if (-not (Test-Command 'python') -and -not (Test-Command 'py')) {
-        Fail 'Python 3 não foi encontrado após a instalação.'
+        Fail 'Python 3 nao foi encontrado apos a instalacao.'
     }
 
-    Success 'Dependências base instaladas/verificadas.'
+    Success 'Dependencias base instaladas/verificadas.'
 }
 
 function Resolve-NpmCmd {
@@ -274,7 +274,7 @@ function Install-OrUpgrade-NodeWindows {
     $npmCmd = Resolve-NpmCmd
 
     if ((Test-Command 'node') -and $npmCmd -and $currentMajor -ge 24) {
-        Success ("Node {0} e npm {1} já atendem ao requisito mínimo; pulando reinstalação." -f (& node --version), (& $npmCmd --version))
+        Success ("Node {0} e npm {1} ja atendem ao requisito minimo; pulando reinstalacao." -f (& node --version), (& $npmCmd --version))
         return
     }
 
@@ -285,18 +285,18 @@ function Install-OrUpgrade-NodeWindows {
     if (-not $installed) { $installed = Install-WithChoco -Packages @('nodejs-lts', 'nodejs') -DisplayName 'Node.js' }
     if (-not $installed) { $installed = Install-WithScoop -Packages @('nodejs-lts', 'nodejs') -DisplayName 'Node.js' }
     if (-not $installed) {
-        Fail 'Não foi possível instalar Node.js automaticamente. Instale manualmente e execute novamente.'
+        Fail 'Nao foi possivel instalar Node.js automaticamente. Instale manualmente e execute novamente.'
     }
 
     Refresh-Path
     $npmCmd = Resolve-NpmCmd
 
     if (-not (Test-Command 'node') -or -not $npmCmd) {
-        Fail 'Node.js ou npm não foram encontrados após a instalação.'
+        Fail 'Node.js ou npm nao foram encontrados apos a instalacao.'
     }
 
     if ((Get-NodeMajor) -lt 24) {
-        Fail ('A versão instalada do Node ({0}) é inferior à 24.' -f (& node --version))
+        Fail ('A versao instalada do Node ({0}) e inferior a 24.' -f (& node --version))
     }
 
     Success ("Node {0} e npm {1} instalados/verificados." -f (& node --version), (& $npmCmd --version))
@@ -354,14 +354,14 @@ function Resolve-OpenClawCommand {
 function Install-OfficialOpenClaw {
     if (OpenClaw-IsOfficialCli) {
         $script:OpenClawCmd = Resolve-OpenClawCommand
-        Success "CLI oficial do OpenClaw já está instalada em: $script:OpenClawCmd; pulando reinstalação."
+        Success "CLI oficial do OpenClaw ja esta instalada em: $script:OpenClawCmd; pulando reinstalacao."
         try { & $script:OpenClawCmd --version | Out-Host } catch {}
         return
     }
 
     $npmCmd = Resolve-NpmCmd
     if (-not $npmCmd) {
-        Fail 'npm.cmd não foi encontrado.'
+        Fail 'npm.cmd nao foi encontrado.'
     }
 
     Info 'Instalando OpenClaw oficial com npm install -g openclaw@latest...'
@@ -382,7 +382,7 @@ function Install-OfficialOpenClaw {
 
     $script:OpenClawCmd = Resolve-OpenClawCommand
     if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw não foi encontrado após a instalação oficial.'
+        Fail 'O comando openclaw nao foi encontrado apos a instalacao oficial.'
     }
 
     Success "CLI oficial encontrada em: $script:OpenClawCmd"
@@ -391,15 +391,15 @@ function Install-OfficialOpenClaw {
 
 function Stage-PreviousInstall {
     if (Test-Path $script:DestDir) {
-        Success "Instalação atual detectada em $script:DestDir; os arquivos serão substituídos individualmente sem apagar a pasta inteira."
+        Success "Instalacao atual detectada em $script:DestDir; os arquivos serao substituidos individualmente sem apagar a pasta inteira."
     } else {
-        Success "Nenhuma instalação anterior em $script:DestDir; a estrutura oficial será criada na próxima etapa."
+        Success "Nenhuma instalacao anterior em $script:DestDir; a estrutura oficial sera criada na proxima etapa."
     }
 }
 
 function Initialize-OfficialHome {
     if (Test-Path $script:DestDir) {
-        Success 'A pasta ~/.openclaw já existe; pulando recriação oficial.'
+        Success 'A pasta ~/.openclaw ja existe; pulando recriacao oficial.'
         return
     }
 
@@ -407,7 +407,7 @@ function Initialize-OfficialHome {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
     if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw não foi encontrado antes do setup.'
+        Fail 'O comando openclaw nao foi encontrado antes do setup.'
     }
 
     Info 'Inicializando a pasta oficial ~/.openclaw com openclaw setup...'
@@ -417,24 +417,24 @@ function Initialize-OfficialHome {
     }
 
     if (-not (Test-Path $script:DestDir)) {
-        Fail 'O OpenClaw oficial não criou a pasta ~/.openclaw.'
+        Fail 'O OpenClaw oficial nao criou a pasta ~/.openclaw.'
     }
 
     Success "Pasta oficial criada com sucesso em $script:DestDir"
 }
 
 function Replace-WithRobotizaiBundle {
-    if (-not (Test-Path $script:SourceDir)) { Fail 'A pasta de origem RobotizAI não existe.' }
-    if (-not (Test-Path $script:DestDir)) { Fail 'A pasta de destino ~/.openclaw não existe.' }
+    if (-not (Test-Path $script:SourceDir)) { Fail 'A pasta de origem RobotizAI nao existe.' }
+    if (-not (Test-Path $script:DestDir)) { Fail 'A pasta de destino ~/.openclaw nao existe.' }
 
-    Info 'Substituindo os arquivos da ~/.openclaw pela versão RobotizAI do GitHub...'
+    Info 'Substituindo os arquivos da ~/.openclaw pela versao RobotizAI do GitHub...'
 
     $robocopy = Get-Command 'robocopy.exe' -ErrorAction SilentlyContinue
     if ($robocopy) {
         & $robocopy.Source $script:SourceDir $script:DestDir /E /R:2 /W:1 /NFL /NDL /NJH /NJS /NC /NS /NP | Out-Null
         $code = $LASTEXITCODE
         if ($code -gt 7) {
-            Fail "A atualização dos arquivos RobotizAI falhou (robocopy exit code $code)."
+            Fail "A atualizacao dos arquivos RobotizAI falhou (robocopy exit code $code)."
         }
     } else {
         $directories = Get-ChildItem -LiteralPath $script:SourceDir -Force -Recurse -Directory
@@ -485,13 +485,13 @@ function Restart-Gateway {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
     if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw não foi encontrado antes de reiniciar o gateway.'
+        Fail 'O comando openclaw nao foi encontrado antes de reiniciar o gateway.'
     }
 
     if (Gateway-IsRunning) {
-        Info 'Gateway já está ativo; reiniciando para aplicar a versão RobotizAI...'
+        Info 'Gateway ja esta ativo; reiniciando para aplicar a versao RobotizAI...'
     } else {
-        Info 'Gateway não está ativo; iniciando/reiniciando...'
+        Info 'Gateway nao esta ativo; iniciando/reiniciando...'
     }
 
     & $script:OpenClawCmd gateway restart
@@ -511,11 +511,11 @@ function Run-Onboard {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
     if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw não foi encontrado antes do onboard.'
+        Fail 'O comando openclaw nao foi encontrado antes do onboard.'
     }
 
     if (Onboard-AlreadyDone) {
-        Success 'Estrutura principal do OpenClaw já existe; pulando nova execução do onboard.'
+        Success 'Estrutura principal do OpenClaw ja existe; pulando nova execucao do onboard.'
         return
     }
 
@@ -524,7 +524,7 @@ function Run-Onboard {
     if ($LASTEXITCODE -ne 0) {
         Fail 'O onboarding do OpenClaw falhou.'
     }
-    Success 'Onboarding concluído.'
+    Success 'Onboarding concluido.'
 }
 
 function Dashboard-AlreadyRunning {
@@ -543,13 +543,13 @@ function Open-Dashboard {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
     if (-not $script:OpenClawCmd) {
-        Fail 'O comando openclaw não foi encontrado antes de abrir o dashboard.'
+        Fail 'O comando openclaw nao foi encontrado antes de abrir o dashboard.'
     }
 
     Info 'Abrindo o dashboard do OpenClaw...'
 
     if (Dashboard-AlreadyRunning) {
-        Success 'Dashboard já está em execução; pulando nova abertura.'
+        Success 'Dashboard ja esta em execucao; pulando nova abertura.'
         return
     }
 
@@ -567,16 +567,16 @@ function Open-Dashboard {
 try {
     Show-Banner
 
-    Next-Step 'Instalando dependências base (curl, git, python3, venv)'
+    Next-Step 'Instalando dependencias base (curl, git, python3, venv)'
     Install-BasePackagesWindows
 
-    Next-Step 'Baixando o repositório RobotizAI'
+    Next-Step 'Baixando o repositorio RobotizAI'
     Prepare-Source
 
     Next-Step 'Garantindo Node.js 24 ou superior e npm'
     Install-OrUpgrade-NodeWindows
 
-    Next-Step 'Preparando uma instalação oficial limpa do OpenClaw'
+    Next-Step 'Preparando uma instalacao oficial limpa do OpenClaw'
     Stage-PreviousInstall
 
     Next-Step 'Instalando a CLI oficial do OpenClaw via npm'
@@ -585,7 +585,7 @@ try {
     Next-Step 'Criando a ~/.openclaw oficial do OpenClaw'
     Initialize-OfficialHome
 
-    Next-Step 'Substituindo a ~/.openclaw oficial pela versão RobotizAI'
+    Next-Step 'Substituindo a ~/.openclaw oficial pela versao RobotizAI'
     Replace-WithRobotizaiBundle
 
     Next-Step 'Reiniciando o gateway do OpenClaw'
@@ -606,30 +606,30 @@ try {
     $script:InstallSucceeded = $true
 
     Write-Host ''
-    Success 'Instalação concluída com sucesso!'
+    Success 'Instalacao concluida com sucesso!'
     Write-Host ''
     Write-Host ("OpenClaw oficial instalado: {0}" -f $script:OpenClawCmd)
     try {
-        Write-Host ("Versão do OpenClaw: {0}" -f (& $script:OpenClawCmd --version))
+        Write-Host ("Versao do OpenClaw: {0}" -f (& $script:OpenClawCmd --version))
     } catch {
     }
     Write-Host ''
-    Write-Host '🤖 Comandos úteis:'
-    Write-Host '  openclaw onboard -> Configurações iniciais do openclaw'
+    Write-Host '🤖 Comandos uteis:'
+    Write-Host '  openclaw onboard -> Configuracoes iniciais do openclaw'
     Write-Host '  openclaw gateway stop -> Finaliza o openclaw'
     Write-Host '  openclaw gateway start -> Inicia o openclaw'
     Write-Host '  openclaw gateway restart -> Reinicia o openclaw'
-    Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrão'
+    Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrao'
     Write-Host ''
-    Write-Host '👉 Próximo comando, digite:'
+    Write-Host '👉 Proximo comando, digite:'
     Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '👉 Depois que concluir as configurações inicias (com openclaw onboard) atualize a página do Openclaw (apertando Ctrl + F5) ou digite o comando:'
+    Write-Host '👉 Depois que concluir as configuracoes inicias (com openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
     Write-Host '  openclaw dashboard'
 }
 catch {
     Write-Host ''
-    Warn-Message 'A instalação falhou.'
+    Warn-Message 'A instalacao falhou.'
     Write-Error $_.Exception.Message
     exit 1
 }
