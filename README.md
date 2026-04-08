@@ -36,7 +36,7 @@ Visite nossa **Loja Online** oficial em **https://RobotzAI.com/loja-openclaw** e
 </details>
 
 <details>
-<summary>🏠 Clique para ver a casa do Goku</summary><br>
+<summary>🏠 Clique para ver a casa do Goku (dragonball z)</summary><br>
 
 🛒 Disponível na [Loja Online](https://robotizai.com/loja)
 
