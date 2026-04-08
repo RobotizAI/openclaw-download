@@ -1,0 +1,16 @@
+{
+  "name": "@ollama/openclaw-web-search",
+  "version": "0.2.2",
+  "description": "Ollama web search for OpenClaw",
+  "type": "module",
+  "main": "index.ts",
+  "files": [
+    "index.ts",
+    "openclaw.plugin.json"
+  ],
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

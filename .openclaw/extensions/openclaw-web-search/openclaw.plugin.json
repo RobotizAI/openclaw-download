@@ -1,0 +1,10 @@
+{
+  "id": "openclaw-web-search",
+  "name": "Ollama Web Search",
+  "description": "Web search and fetch via local ollama server",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

@@ -1,0 +1,233 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.28",
+    "lastTouchedAt": "2026-04-05T02:29:29.719Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-30T02:14:49.222Z",
+    "lastRunVersion": "2026.3.23-2",
+    "lastRunCommand": "onboard",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {}
+  },
+  "models": {
+    "providers": {}
+  },
+  "agents": {
+    "defaults": {
+      "model": {},
+      "models": {},
+      "workspace": "/home/pc/.openclaw/workspace",
+      "compaction": {
+        "mode": "safeguard"
+      }
+    },
+    "list": [
+      {
+        "id": "main",
+        "model": "google/gemini-3.1-flash-lite-preview",
+        "skills": [
+          "apple-notes",
+          "apple-reminders",
+          "bear-notes",
+          "blogwatcher",
+          "blucli",
+          "bluebubbles",
+          "camsnap",
+          "clawhub",
+          "coding-agent",
+          "discord",
+          "eightctl",
+          "gemini",
+          "gh-issues",
+          "gifgrep",
+          "github",
+          "gog",
+          "goplaces",
+          "healthcheck",
+          "himalaya",
+          "imsg",
+          "mcporter",
+          "model-usage",
+          "nano-pdf",
+          "node-connect",
+          "notion",
+          "obsidian",
+          "openai-whisper",
+          "openai-whisper-api",
+          "openhue",
+          "oracle",
+          "ordercli",
+          "peekaboo",
+          "sag",
+          "session-logs",
+          "sherpa-onnx-tts",
+          "skill-creator",
+          "slack",
+          "songsee",
+          "sonoscli",
+          "spotify-player",
+          "summarize",
+          "things-mac",
+          "tmux",
+          "trello",
+          "video-frames",
+          "voice-call",
+          "wacli",
+          "weather",
+          "xurl"
+        ],
+        "tools": {
+          "alsoAllow": [
+            "browser",
+            "canvas",
+            "gateway",
+            "nodes"
+          ]
+        }
+      }
+    ]
+  },
+  "tools": {
+    "profile": "coding",
+    "alsoAllow": [
+      "ollama_web_search",
+      "ollama_web_fetch"
+    ],
+    "web": {
+      "search": {
+        "enabled": false,
+        "provider": "duckduckgo"
+      },
+      "fetch": {
+        "enabled": false
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "boot-md": {
+          "enabled": true
+        },
+        "bootstrap-extra-files": {
+          "enabled": true
+        },
+        "command-logger": {
+          "enabled": true
+        },
+        "session-memory": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "channels": {
+    "whatsapp": {
+      "enabled": true,
+      "capabilities": [],
+      "sendReadReceipts": true,
+      "dmPolicy": "pairing",
+      "selfChatMode": true,
+      "allowFrom": [],
+      "groupAllowFrom": [],
+      "groupPolicy": "open",
+      "dms": {},
+      "groups": {},
+      "ackReaction": {
+        "direct": true,
+        "group": "always"
+      },
+      "debounceMs": 0,
+      "heartbeat": {
+        "showOk": true,
+        "showAlerts": true,
+        "useIndicator": true
+      },
+      "healthMonitor": {
+        "enabled": true
+      },
+      "accounts": {},
+      "mediaMaxMb": 50,
+      "actions": {
+        "reactions": true,
+        "sendMessage": true,
+        "polls": true
+      }
+    }
+  },
+  "gateway": {
+    "port": 18789,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "df288ec93fb0aab8771884fe02cbf6a8e8ead05afbf20077"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    },
+    "nodes": {
+      "denyCommands": [
+        "camera.snap",
+        "camera.clip",
+        "screen.record",
+        "contacts.add",
+        "calendar.add",
+        "reminders.add",
+        "sms.send"
+      ]
+    }
+  },
+  "skills": {
+    "entries": {
+      "1password": {
+        "enabled": false
+      },
+      "bluebubbles": {
+        "enabled": false
+      },
+      "goplaces": {},
+      "model-usage": {
+        "enabled": true
+      }
+    }
+  },
+  "plugins": {
+    "allow": [
+      "openclaw-web-search",
+      "whatsapp"
+    ],
+    "entries": {
+      "openclaw-web-search": {
+        "enabled": true,
+        "config": {}
+      },
+      "whatsapp": {
+        "enabled": true,
+        "config": {}
+      },
+      "duckduckgo": {}
+    },
+    "installs": {
+      "openclaw-web-search": {
+        "source": "npm",
+        "spec": "@ollama/openclaw-web-search",
+        "installPath": "/home/pc/.openclaw/extensions/openclaw-web-search"
+      }
+    }
+  }
+}
