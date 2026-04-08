@@ -10,7 +10,6 @@ REPO_URL="https://github.com/RobotizAI/openclaw-download.git"
 TMP_DIR="/tmp/openclaw-install"
 DEST_DIR="$HOME/.openclaw"
 SOURCE_DIR=""
-PREVIOUS_DEST_BACKUP=""
 TOTAL_STEPS=11
 CURRENT_STEP=0
 BAR_WIDTH=34
@@ -18,7 +17,7 @@ BAR_WIDTH=34
 banner() {
   echo ""
   echo " ╔════════════════════════════════════════════╗"
-  echo " ║      OpenClaw RobotizAI Installer v77     ║"
+  echo " ║      OpenClaw RobotizAI Installer v79     ║"
   echo " ╚════════════════════════════════════════════╝"
   echo ""
 }
@@ -72,10 +71,6 @@ cleanup_on_error() {
   if [ "$exit_code" -ne 0 ]; then
     echo ""
     warn "A instalação falhou."
-    if [ -n "$PREVIOUS_DEST_BACKUP" ] && [ -d "$PREVIOUS_DEST_BACKUP" ] && [ ! -e "$DEST_DIR" ]; then
-      mv "$PREVIOUS_DEST_BACKUP" "$DEST_DIR"
-      warn "A instalação anterior foi restaurada em $DEST_DIR"
-    fi
   fi
   exit "$exit_code"
 }
@@ -222,12 +217,9 @@ install_official_openclaw() {
 
 stage_previous_install() {
   if [ -e "$DEST_DIR" ]; then
-    PREVIOUS_DEST_BACKUP="${DEST_DIR}.robotizai-pre-v77-$(date +%Y%m%d-%H%M%S)"
-    info "Movendo a instalação atual para backup temporário: $PREVIOUS_DEST_BACKUP"
-    mv "$DEST_DIR" "$PREVIOUS_DEST_BACKUP"
-    success "Instalação anterior movida para backup temporário."
+    success "Instalação atual detectada em $DEST_DIR; os arquivos serão substituídos individualmente sem apagar a pasta inteira."
   else
-    success "Nenhuma instalação anterior em $DEST_DIR; seguindo para a próxima etapa."
+    success "Nenhuma instalação anterior em $DEST_DIR; a estrutura oficial será criada na próxima etapa."
   fi
 }
 
@@ -244,11 +236,33 @@ initialize_official_home() {
 }
 
 replace_with_robotizai_bundle() {
-  info "Substituindo ~/.openclaw pela versão RobotizAI do GitHub..."
-  rm -rf "$DEST_DIR"
-  cp -a "$SOURCE_DIR" "$DEST_DIR"
-  [ -d "$DEST_DIR" ] || fail "A cópia da pasta RobotizAI para $DEST_DIR falhou."
-  success "Pasta RobotizAI copiada para $DEST_DIR"
+  [ -d "$SOURCE_DIR" ] || fail "A pasta de origem RobotizAI não existe."
+  [ -d "$DEST_DIR" ] || fail "A pasta de destino ~/.openclaw não existe."
+
+  info "Substituindo os arquivos da ~/.openclaw pela versão RobotizAI do GitHub..."
+
+  while IFS= read -r -d '' item; do
+    local rel
+    local target
+    rel="${item#"$SOURCE_DIR"/}"
+    target="$DEST_DIR/$rel"
+
+    if [ -d "$item" ]; then
+      if [ -e "$target" ] && [ ! -d "$target" ]; then
+        rm -rf "$target"
+      fi
+      mkdir -p "$target"
+    elif [ -L "$item" ] || [ -f "$item" ]; then
+      mkdir -p "$(dirname "$target")"
+      if [ -e "$target" ] && [ -d "$target" ] && [ ! -L "$target" ]; then
+        rm -rf "$target"
+      fi
+      cp -a "$item" "$target"
+    fi
+  done < <(find "$SOURCE_DIR" -mindepth 1 -print0)
+
+  [ -d "$DEST_DIR" ] || fail "A atualização dos arquivos RobotizAI em $DEST_DIR falhou."
+  success "Arquivos RobotizAI copiados individualmente para $DEST_DIR"
 }
 
 gateway_is_running() {
@@ -312,7 +326,7 @@ main() {
   if command_exists apt-get; then
     install_base_packages_linux
   else
-    fail "Este instalador v77 suporta Linux com apt-get (Ubuntu / Debian / Linux Mint)."
+    fail "Este instalador v79 suporta Linux com apt-get (Ubuntu / Debian / Linux Mint)."
   fi
 
   next_step "Baixando o repositório RobotizAI"
@@ -343,9 +357,6 @@ main() {
   open_dashboard
 
   next_step "Concluindo"
-  if [ -n "$PREVIOUS_DEST_BACKUP" ] && [ -d "$PREVIOUS_DEST_BACKUP" ]; then
-    rm -rf "$PREVIOUS_DEST_BACKUP"
-  fi
   rm -rf "$TMP_DIR"
   rm -f /tmp/openclaw-gateway-status.log
   trap - EXIT
