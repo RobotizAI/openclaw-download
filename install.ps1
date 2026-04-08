@@ -16,12 +16,11 @@ $script:TotalSteps = 11
 $script:CurrentStep = 0
 $script:BarWidth = 34
 $script:InstallSucceeded = $false
-$script:GatewayStartLog = Join-Path $env:TEMP 'openclaw-gateway-start.log'
 
 function Show-Banner {
     Write-Host ''
     Write-Host ' ===================================================='
-    Write-Host '     OpenClaw RobotizAI Installer v79.8 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.9 - Windows'
     Write-Host ' ===================================================='
     Write-Host ''
 }
@@ -268,7 +267,8 @@ function Install-OrUpgrade-NodeWindows {
         try {
             if (Test-Command 'node') {
                 & choco upgrade nodejs-lts -y | Out-Host
-            } else {
+            }
+            else {
                 & choco install nodejs-lts -y | Out-Host
             }
             Refresh-Path
@@ -281,7 +281,8 @@ function Install-OrUpgrade-NodeWindows {
         try {
             if (Test-Path (Join-Path $env:USERPROFILE 'scoop\apps\nodejs-lts')) {
                 & scoop update nodejs-lts | Out-Host
-            } else {
+            }
+            else {
                 & scoop install nodejs-lts | Out-Host
             }
             Refresh-Path
@@ -461,58 +462,26 @@ function Initialize-OfficialHome {
 function Should-SkipSourceRelativePath {
     param([string]$RelativePath)
 
-    $rel = ($RelativePath -replace '/', '\').TrimStart('\')
+    $rel = ($RelativePath -replace '/', '\\').TrimStart('\\')
     $skipPrefixes = @(
         'openclaw.json',
-        'extensions',
         'browser',
         'completions',
         'canvas',
         'devices',
+        'extensions',
         'exec-approvals.json',
         'update-check.json',
         'cron\runs'
     )
 
     foreach ($prefix in $skipPrefixes) {
-        if ($rel -ieq $prefix -or $rel -like ($prefix + '\*')) {
+        if ($rel -ieq $prefix -or $rel -like ($prefix + '\\*')) {
             return $true
         }
     }
 
     return $false
-}
-
-function Repair-WindowsOpenClawConfig {
-    $configPath = Join-Path $script:DestDir 'openclaw.json'
-    if (-not (Test-Path $configPath)) {
-        return
-    }
-
-    Info 'Reparando openclaw.json existente para Windows...'
-
-    $originalText = Get-Content -LiteralPath $configPath -Raw
-    $updatedText = $originalText
-
-    $updatedText = [regex]::Replace(
-        $updatedText,
-        '/home/[^/\r\n]+/\.openclaw/workspace',
-        '~/.openclaw/workspace'
-    )
-
-    $updatedText = [regex]::Replace(
-        $updatedText,
-        '/home/[^/\r\n]+/\.openclaw/extensions/openclaw-web-search',
-        '~/.openclaw/extensions/openclaw-web-search'
-    )
-
-    if ($updatedText -ne $originalText) {
-        Set-Content -LiteralPath $configPath -Value $updatedText -Encoding UTF8
-        Success 'openclaw.json reparado para Windows.'
-    }
-    else {
-        Success 'openclaw.json ja esta compativel com Windows.'
-    }
 }
 
 function Replace-WithRobotizaiBundle {
@@ -529,7 +498,7 @@ function Replace-WithRobotizaiBundle {
     $items = Get-ChildItem -LiteralPath $script:SourceDir -Force -Recurse
 
     foreach ($item in $items) {
-        $relativePath = $item.FullName.Substring($script:SourceDir.Length).TrimStart('\')
+        $relativePath = $item.FullName.Substring($script:SourceDir.Length).TrimStart('\\')
         if ([string]::IsNullOrWhiteSpace($relativePath)) {
             continue
         }
@@ -565,7 +534,31 @@ function Replace-WithRobotizaiBundle {
     }
 
     Success "Arquivos RobotizAI copiados individualmente para $script:DestDir"
-    Repair-WindowsOpenClawConfig
+}
+
+function Repair-OpenClawJsonForWindows {
+    $configPath = Join-Path $script:DestDir 'openclaw.json'
+    if (-not (Test-Path $configPath)) {
+        return
+    }
+
+    Info 'Reparando openclaw.json existente para Windows...'
+
+    $text = Get-Content -LiteralPath $configPath -Raw
+    $originalText = $text
+
+    $text = $text -replace '/home/[^/]+/\.openclaw/workspace', '~/.openclaw/workspace'
+    $text = $text -replace '/home/[^/]+/\.openclaw/extensions/[^"\r\n]+', ''
+    $text = $text -replace '"installPath"\s*:\s*""\s*,?', ''
+
+    Set-Content -LiteralPath $configPath -Value $text -Encoding UTF8
+
+    if ($text -ne $originalText) {
+        Success 'openclaw.json reparado para Windows.'
+    }
+    else {
+        Success 'openclaw.json ja esta compativel com Windows.'
+    }
 }
 
 function Get-GatewayStatusText {
@@ -598,6 +591,10 @@ function Gateway-IsRunning {
         return $false
     }
 
+    if ($statusText -match 'Gateway not running|service missing|not installed|connection refused') {
+        return $false
+    }
+
     if ($statusText -match '"(running|online|connected|healthy)"\s*:\s*true') {
         return $true
     }
@@ -613,6 +610,25 @@ function Gateway-IsRunning {
     return $false
 }
 
+function Start-GatewayNativeWindows {
+    $stdoutLog = Join-Path $env:TEMP 'openclaw-gateway-stdout.log'
+    $stderrLog = Join-Path $env:TEMP 'openclaw-gateway-stderr.log'
+
+    if (Test-Path $stdoutLog) { Remove-Item -LiteralPath $stdoutLog -Force }
+    if (Test-Path $stderrLog) { Remove-Item -LiteralPath $stderrLog -Force }
+
+    Info 'Iniciando o gateway com o comando nativo do Windows: openclaw gateway --force'
+
+    Start-Process -FilePath $script:OpenClawCmd `
+        -ArgumentList @('gateway','--force') `
+        -WindowStyle Hidden `
+        -RedirectStandardOutput $stdoutLog `
+        -RedirectStandardError $stderrLog `
+        -PassThru | Out-Null
+
+    Start-Sleep -Seconds 5
+}
+
 function Restart-Gateway {
     if (-not $script:OpenClawCmd) {
         $script:OpenClawCmd = Resolve-OpenClawCommand
@@ -621,47 +637,33 @@ function Restart-Gateway {
     if (Gateway-IsRunning) {
         Info 'Gateway ja esta ativo; reiniciando para aplicar a versao RobotizAI...'
         try {
-            & $script:OpenClawCmd gateway stop | Out-Host
+            & $script:OpenClawCmd gateway restart | Out-Host
         } catch {
         }
-        Start-Sleep -Seconds 2
+        Start-Sleep -Seconds 3
+    }
+
+    if (Gateway-IsRunning) {
+        Success 'Gateway reiniciado.'
+        return
+    }
+
+    Start-GatewayNativeWindows
+
+    if (Gateway-IsRunning) {
+        Success 'Gateway iniciado.'
     }
     else {
-        Info 'Gateway nao esta ativo; iniciando gateway local do OpenClaw...'
+        Warn-Message 'Gateway ainda nao esta ativo. No Windows nativo isso pode exigir PowerShell como Administrador.'
     }
+}
 
-    if (Test-Path $script:GatewayStartLog) {
-        Remove-Item -LiteralPath $script:GatewayStartLog -Force -ErrorAction SilentlyContinue
-    }
-
-    Start-Process -FilePath $script:OpenClawCmd -ArgumentList @('gateway', '--force') -WindowStyle Hidden -RedirectStandardOutput $script:GatewayStartLog -RedirectStandardError $script:GatewayStartLog | Out-Null
-
-    for ($i = 0; $i -lt 20; $i++) {
-        Start-Sleep -Seconds 1
-        if (Gateway-IsRunning) {
-            Success 'Gateway iniciado com sucesso.'
-            return
-        }
-    }
-
-    $details = ''
-    if (Test-Path $script:GatewayStartLog) {
-        try {
-            $details = (Get-Content -LiteralPath $script:GatewayStartLog -Tail 80 | Out-String).Trim()
-        } catch {
-        }
-    }
-
-    if (-not [string]::IsNullOrWhiteSpace($details)) {
-        Fail ("O gateway nao ficou ativo no Windows nativo. Ultimos detalhes:`n{0}" -f $details)
-    }
-
-    Fail 'O gateway nao ficou ativo no Windows nativo.'
+function Onboard-AlreadyDone {
+    return (Test-Path (Join-Path $script:DestDir 'openclaw.json'))
 }
 
 function Run-Onboard {
-    Success 'No Windows nativo, o instalador nao executa openclaw onboard automaticamente.'
-    Success 'Para configurar credenciais e modelo depois, use: openclaw configure'
+    Success 'Estrutura principal do OpenClaw ja existe; pulando nova execucao do onboard.'
 }
 
 function Get-DashboardUrl {
@@ -681,7 +683,7 @@ function Get-DashboardUrl {
                 if ($config.gateway.bind) {
                     $bind = [string]$config.gateway.bind
 
-                    if ($bind -match '^(loopback|localhost|127\.0\.0\.1)$') {
+                    if ($bind -match '^(loopback|localhost|127\.0\.0\.1|~\\.openclaw\\workspace)$') {
                         $dashboardHost = '127.0.0.1'
                     }
                     elseif ($bind -notmatch '^(0\.0\.0\.0|\*|all)$') {
@@ -702,17 +704,20 @@ function Open-Dashboard {
     $dashboardUrl = Get-DashboardUrl
 
     if (-not (Gateway-IsRunning)) {
-        Fail ("Gateway nao esta ativo. O dashboard nao pode ser aberto em {0}" -f $dashboardUrl)
+        Warn-Message ("Gateway nao esta ativo. O dashboard nao pode ser aberto em {0}" -f $dashboardUrl)
+        return
     }
 
     try {
         $response = Invoke-WebRequest -UseBasicParsing -Uri $dashboardUrl -Method Get -TimeoutSec 10
         if (-not $response -or -not $response.StatusCode -or $response.StatusCode -lt 200 -or $response.StatusCode -ge 400) {
-            Fail ("O dashboard nao respondeu corretamente em {0}" -f $dashboardUrl)
+            Warn-Message ("O dashboard nao respondeu corretamente em {0}" -f $dashboardUrl)
+            return
         }
     }
     catch {
-        Fail ("O dashboard nao respondeu corretamente em {0}" -f $dashboardUrl)
+        Warn-Message ("O dashboard nao respondeu corretamente em {0}" -f $dashboardUrl)
+        return
     }
 
     Start-Process $dashboardUrl | Out-Null
@@ -742,6 +747,7 @@ try {
 
     Next-Step 'Substituindo a ~/.openclaw oficial pela versao RobotizAI'
     Replace-WithRobotizaiBundle
+    Repair-OpenClawJsonForWindows
 
     Next-Step 'Reiniciando o gateway do OpenClaw'
     Restart-Gateway
@@ -771,18 +777,18 @@ try {
     }
 
     Write-Host ''
-    Write-Host '*Comandos uteis:'
-    Write-Host '  openclaw configure -> Configuracoes de credenciais e modelo'
+    Write-Host 'Comandos uteis:'
+    Write-Host '  openclaw onboard -> Configuracoes iniciais do openclaw'
     Write-Host '  openclaw gateway stop -> Finaliza o openclaw'
-    Write-Host '  openclaw gateway --force -> Inicia o gateway local'
-    Write-Host '  openclaw gateway status -> Mostra o status do gateway'
-    Write-Host '  http://127.0.0.1:18789/ -> Abre o OpenClaw no navegador'
+    Write-Host '  openclaw gateway start -> Inicia o openclaw'
+    Write-Host '  openclaw gateway restart -> Reinicia o openclaw'
+    Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrao'
     Write-Host ''
-    Write-Host '-> Se precisar configurar credenciais ou modelo, digite:'
-    Write-Host '  openclaw configure'
+    Write-Host 'Se precisar reconfigurar o OpenClaw, digite:'
+    Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '-> Para abrir o OpenClaw no navegador, use:'
-    Write-Host '  http://127.0.0.1:18789/'
+    Write-Host 'Para abrir o OpenClaw no navegador, digite:'
+    Write-Host '  openclaw dashboard'
 }
 catch {
     Write-Host ''
