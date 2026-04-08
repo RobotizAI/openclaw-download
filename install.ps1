@@ -20,7 +20,7 @@ $script:InstallSucceeded = $false
 function Show-Banner {
     Write-Host ''
     Write-Host ' ===================================================='
-    Write-Host '     OpenClaw RobotizAI Installer v79.6 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.7 - Windows'
     Write-Host ' ===================================================='
     Write-Host ''
 }
@@ -471,6 +471,7 @@ function Should-SkipSourceRelativePath {
         'completions',
         'canvas',
         'devices',
+        'extensions',
         'exec-approvals.json',
         'update-check.json',
         'cron\runs'
@@ -601,7 +602,11 @@ function Gateway-IsRunning {
         return $false
     }
 
-    if ($statusText -match '"(running|online|connected|healthy)"\s*:\s*true') {
+    if ($statusText -match '(?i)gateway service missing|gateway not running|service not installed|rpc probe:\s*fail|runtime:\s*stopped|runtime:\s*not running|\bunreachable\b') {
+        return $false
+    }
+
+    if ($statusText -match '"running"\s*:\s*true') {
         return $true
     }
 
@@ -609,8 +614,45 @@ function Gateway-IsRunning {
         return $true
     }
 
-    if ($statusText -match '(?i)\brunning\b|\bonline\b|\bconnected\b|\bhealthy\b|\bok\b|\bativo\b') {
+    if ($statusText -match '(?i)runtime:\s*running') {
         return $true
+    }
+
+    if ($statusText -match '(?i)rpc probe:\s*ok') {
+        return $true
+    }
+
+    return $false
+}
+
+function Start-GatewayForegroundProcess {
+    if (-not $script:OpenClawCmd) {
+        $script:OpenClawCmd = Resolve-OpenClawCommand
+    }
+
+    $gatewayLog = Join-Path $env:TEMP 'openclaw-gateway.log'
+
+    try {
+        Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+            $_.CommandLine -and $_.CommandLine -match 'openclaw(\.cmd)?\s+gateway'
+        } | ForEach-Object {
+            Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue
+        }
+    } catch {
+    }
+
+    Start-Process -FilePath $script:OpenClawCmd -ArgumentList @('gateway', '--force') -WindowStyle Hidden -RedirectStandardOutput $gatewayLog -RedirectStandardError $gatewayLog | Out-Null
+}
+
+function Wait-ForGateway {
+    param([int]$TimeoutSeconds = 20)
+
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    while ((Get-Date) -lt $deadline) {
+        if (Gateway-IsRunning) {
+            return $true
+        }
+        Start-Sleep -Seconds 2
     }
 
     return $false
@@ -621,46 +663,14 @@ function Restart-Gateway {
         $script:OpenClawCmd = Resolve-OpenClawCommand
     }
 
-    if (Gateway-IsRunning) {
-        Info 'Gateway ja esta ativo; reiniciando para aplicar a versao RobotizAI...'
+    Info 'Iniciando o gateway com o comando nativo do Windows: openclaw gateway --force'
+    Start-GatewayForegroundProcess
+
+    if (Wait-ForGateway -TimeoutSeconds 20) {
+        Success 'Gateway iniciado com sucesso.'
     }
     else {
-        Info 'Gateway nao esta ativo; iniciando/reiniciando...'
-    }
-
-    try {
-        & $script:OpenClawCmd gateway restart | Out-Host
-    } catch {
-    }
-
-    Start-Sleep -Seconds 3
-
-    if (Gateway-IsRunning) {
-        Success 'Gateway reiniciado.'
-        return
-    }
-
-    Warn-Message 'Gateway nao ficou ativo apos o restart. Tentando instalar/atualizar o servico...'
-
-    try {
-        & $script:OpenClawCmd gateway install --force | Out-Host
-    } catch {
-    }
-
-    Start-Sleep -Seconds 2
-
-    try {
-        & $script:OpenClawCmd gateway restart | Out-Host
-    } catch {
-    }
-
-    Start-Sleep -Seconds 3
-
-    if (Gateway-IsRunning) {
-        Success 'Gateway reiniciado.'
-    }
-    else {
-        Warn-Message 'Gateway ainda nao esta ativo. No Windows nativo isso pode exigir PowerShell como Administrador ou uso de openclaw gateway run.'
+        Warn-Message 'Gateway ainda nao esta ativo. No Windows nativo, execute manualmente: openclaw gateway --force'
     }
 }
 
@@ -674,17 +684,7 @@ function Run-Onboard {
         return
     }
 
-    if (-not $script:OpenClawCmd) {
-        $script:OpenClawCmd = Resolve-OpenClawCommand
-    }
-
-    Info 'Executando openclaw onboard automaticamente...'
-    & $script:OpenClawCmd onboard --install-daemon
-    if ($LASTEXITCODE -ne 0) {
-        Fail 'O onboarding do OpenClaw falhou.'
-    }
-
-    Success 'Onboarding concluido.'
+    Warn-Message 'No Windows nativo, o instalador nao executa openclaw onboard automaticamente. Use openclaw configure ou openclaw onboard manualmente se necessario.'
 }
 
 function Dashboard-AlreadyRunning {
@@ -813,13 +813,17 @@ try {
     Write-Host '  openclaw gateway stop -> Finaliza o openclaw'
     Write-Host '  openclaw gateway start -> Inicia o openclaw'
     Write-Host '  openclaw gateway restart -> Reinicia o openclaw'
-    Write-Host '  openclaw dashboard -> Abre o openclaw no navegador padrao'
+    Write-Host '  openclaw gateway --force -> Inicia o gateway local no Windows'
+    Write-Host '  openclaw dashboard -> Tenta abrir o openclaw no navegador padrao'
     Write-Host ''
     Write-Host '-> Se precisar reconfigurar o OpenClaw, digite:'
     Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '-> Para abrir o OpenClaw no navegador, digite:'
-    Write-Host '  openclaw dashboard'
+    Write-Host '-> Para abrir o OpenClaw no navegador, use primeiro:'
+    Write-Host '  openclaw gateway --force'
+    Write-Host ''
+    Write-Host '-> Depois abra manualmente no navegador:'
+    Write-Host '  http://127.0.0.1:18789/'
 }
 catch {
     Write-Host ''
