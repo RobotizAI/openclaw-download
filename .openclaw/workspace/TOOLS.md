@@ -53,9 +53,9 @@ Caso o usuário solicite iniciar ou reiniciar o escritorio, execute o passo a pa
 8- Confirme que http://127.0.0.1:19000/ responde corretamente.
 9- Se falhar, leia /tmp/star_office.log, aplique as correções necessárias, reinicie e teste novamente.
 10- Verifique se o backend/app.py esta funcionando corretamente, se não estiver reinicie para funcionar corretamente.
-11- Verifique se o /home/pc/.openclaw/workspace/Star-Office-UI/session_watcher.py esta funcionando corretamente, se não estiver reinicie para funcionar corretamente.
-12- Verifique se o session_watcher.py esta rodando corretamente em segundo plano, se não estiver reinicie para funcionar corretamente.
-13- Verifique se o processo daemon esta rodando corretamente em segundo plano, se não estiver reinicie para funcionar corretamente.
+11- Verifique se o /home/pc/.openclaw/workspace/Star-Office-UI/session_watcher.py esta funcionando corretamente, e reinicie para funcionar corretamente.
+12- Verifique se o session_watcher.py esta rodando corretamente em segundo plano, e reinicie para funcionar corretamente.
+13- Verifique se o processo daemon esta rodando corretamente em segundo plano, e reinicie para funcionar corretamente.
 14- Só responda ao usuário quando tudo estiver funcionando corretamente. Depois que tudo estiver funcionado corretamente responda o usuário no chat.
 
 ```bash
