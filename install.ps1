@@ -784,7 +784,7 @@ try {
     Write-Host '-> Proximo comando, digite:'
     Write-Host '  openclaw onboard'
     Write-Host ''
-    Write-Host '-> Depois que concluir as configuracoes iniciais (com openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
+    Write-Host '-> Depois que concluir as configuracoes iniciais (openclaw onboard) atualize a pagina do Openclaw (apertando Ctrl + F5) ou digite o comando:'
     Write-Host '  openclaw dashboard'
 }
 catch {
