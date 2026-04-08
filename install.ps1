@@ -20,7 +20,7 @@ $script:InstallSucceeded = $false
 function Show-Banner {
     Write-Host ''
     Write-Host ' ===================================================='
-    Write-Host '     OpenClaw RobotizAI Installer v79.3 - Windows'
+    Write-Host '     OpenClaw RobotizAI Installer v79.4 - Windows'
     Write-Host ' ===================================================='
     Write-Host ''
 }
@@ -664,28 +664,62 @@ function Dashboard-AlreadyRunning {
     }
 }
 
-function Open-Dashboard {
-    if (-not $script:OpenClawCmd) {
-        $script:OpenClawCmd = Resolve-OpenClawCommand
+function Get-DashboardUrl {
+    $host = '127.0.0.1'
+    $port = '18789'
+    $configPath = Join-Path $script:DestDir 'openclaw.json'
+
+    if (Test-Path $configPath) {
+        try {
+            $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
+
+            if ($config.gateway) {
+                if ($config.gateway.port) {
+                    $port = [string]$config.gateway.port
+                }
+
+                if ($config.gateway.bind) {
+                    $bind = [string]$config.gateway.bind
+
+                    if ($bind -match '^(loopback|localhost|127\.0\.0\.1)$') {
+                        $host = '127.0.0.1'
+                    }
+                    elseif ($bind -notmatch '^(0\.0\.0\.0|\*|all)$') {
+                        $host = $bind
+                    }
+                }
+            }
+        } catch {
+        }
     }
 
+    return ("http://{0}:{1}/" -f $host, $port)
+}
+
+function Open-Dashboard {
     Info 'Abrindo o dashboard do OpenClaw...'
 
-    if (Dashboard-AlreadyRunning) {
-        Success 'Dashboard ja esta em execucao; pulando nova abertura.'
+    $dashboardUrl = Get-DashboardUrl
+
+    if (-not (Gateway-IsRunning)) {
+        Warn-Message ("Gateway nao esta ativo. O dashboard nao pode ser aberto em {0}" -f $dashboardUrl)
         return
     }
 
-    $escapedOpenClawCmd = $script:OpenClawCmd.Replace("'", "''")
-    Start-Process -FilePath 'powershell.exe' -ArgumentList @(
-        '-NoProfile',
-        '-ExecutionPolicy', 'Bypass',
-        '-Command',
-        "& '$escapedOpenClawCmd' dashboard"
-    ) | Out-Null
+    try {
+        $response = Invoke-WebRequest -UseBasicParsing -Uri $dashboardUrl -Method Get -TimeoutSec 10
+        if (-not $response -or -not $response.StatusCode -or $response.StatusCode -lt 200 -or $response.StatusCode -ge 400) {
+            Warn-Message ("O dashboard nao respondeu corretamente em {0}" -f $dashboardUrl)
+            return
+        }
+    }
+    catch {
+        Warn-Message ("O dashboard nao respondeu corretamente em {0}" -f $dashboardUrl)
+        return
+    }
 
-    Start-Sleep -Seconds 8
-    Success 'Dashboard acionado.'
+    Start-Process $dashboardUrl | Out-Null
+    Success ("Dashboard aberto no navegador padrao: {0}" -f $dashboardUrl)
 }
 
 try {
