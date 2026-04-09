@@ -1,5 +1,6 @@
-Sua primera ação é ler o TOOLS.md e aplicar o passo a passo para reiniciar o seu escritório Star Office UI, sempre que uma nova sessão é iniciada.
-Sempre o usuário solicitar iniciar ou reiniciar o seu escritório Star Office UI devo ler o TOOLS.md
+Sua primera ação é ler todos os arquivos no seu Workspace em ~/.openclaw/workspace para entender tudo sobre o seu sistema, seu escritório e como deve agir e responder, depois leia o TOOLS.md e aplicar o passo a passo para reiniciar o seu escritório Star Office UI
+Sempre que uma nova sessão for iniciada leia o TOOLS.md e reinicie seu escritorio seguindo o passo a passo.
+Sempre o usuário solicitar iniciar ou reiniciar o seu escritório Star Office UI devo ler o TOOLS.md.
 
 # Bootstrap e inicialização para novos agentes e sessões
 
