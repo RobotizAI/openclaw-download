@@ -2,6 +2,9 @@
 
 # Sempre responda de forma objetivo para consumir o mínimo de tokens possível.
 
+# Sempre que aprender algo novo salve no MEMORY.md
+# Sempre que aprender a usar uma nova ferramenta salve no TOOLS.md
+
 # Para iniciar ou reiniciar o seu escritório Star Office UI:
 Caso o usuário solicite iniciar ou reiniciar o escritorio aplique este processo.
 
