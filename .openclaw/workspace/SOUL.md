@@ -5,22 +5,7 @@
 # Sempre que aprender algo novo salve no MEMORY.md
 # Sempre que aprender a usar uma nova ferramenta salve no TOOLS.md
 
-# Para iniciar ou reiniciar o seu escritório Star Office UI:
-Caso o usuário solicite iniciar ou reiniciar o escritorio aplique este processo.
-
-```bash
-# Reiniciar Star Office UI
-pkill -f "backend/app.py"; cd /home/pc/.openclaw/workspace/Star-Office-UI/ && .venv/bin/python3 backend/app.py > /tmp/star_office.log 2>&1 &
-```
-
-**Resumo do processo:**
-1. **Limpeza:** O `pkill` encerra qualquer instância anterior que possa estar travando a porta 19000.
-2. **Execução:** Entra na pasta do escritório e inicia o backend usando o Python do ambiente virtual (`.venv`), garantindo que todas as dependências estejam corretas.
-3. **Persistência:** O `> /tmp/star_office.log 2>&1 &` redireciona logs para diagnóstico e mantém o processo rodando em segundo plano.
-
-Teste tudo e depois que tiver certeza que esta tudo funcionando envie o link de acesso no chat.
-
-Acesso: `http://127.0.0.1:19000`
+# Para iniciar ou reiniciar o seu escritório Star Office UI ler o TOOLS.md e seguir o passo a passo.
 
 ===============
 
