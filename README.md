@@ -147,7 +147,7 @@ O comando `openclaw` continua sendo o **OpenClaw oficial**, não um wrapper cust
   
 | Sistema | Diretório |
 |---|---|
-| 🐧 Linux / macOS | `~/.openclaw` |
+| 🐧 Linux / 🍎 macOS | `~/.openclaw` |
 | 🪟 Windows | `%USERPROFILE%\.openclaw` |
 
 </details>
@@ -159,7 +159,7 @@ O comando `openclaw` continua sendo o **OpenClaw oficial**, não um wrapper cust
 <details>
 <summary>(clique para ver mais)</summary>
 
-#### 🐧 Linux / macOS
+#### 🐧 Linux / 🍎 macOS
 
 bash
 ```
