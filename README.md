@@ -83,6 +83,23 @@ Estes são os requisitos mínimos recomendados para o Openclaw Office RobotizAI 
 
 ---
 
+### 🔐 É seguro instalar o OpenClaw Office RobotizAI?
+<details>
+<summary>(clique para ver mais)</summary>
+  
+Sim, o **OpenClaw Office RobotizAI** utiliza o OpenClaw oficial como base, **mantendo o comando original** do sistema, e aplica automaticamente a **estrutura personalizada da RobotizAI** com **interface visual Web UI**, **tradução completa em pt-BR**, **otimizações de performance**, **workspace configurado** e **recursos extras** prontos para uso.
+
+Na prática, isso torna a **instalação mais segura**, **previsível** e **profissional** do que uma configuração manual feita do zero, porque **reduz falhas** comuns como dependências incompletas, etapas esquecidas, **configurações erradas** e **retrabalho técnico**. Em vez de o usuário precisar montar tudo manualmente, o instalador **organiza o ambiente**, **instala os pré-requisitos**, **prepara o OpenClaw corretamente** e aplica a **configuração personalizada** de forma automatizada.
+
+Outro ponto importante é que o sistema foi pensado para **entregar uma experiência mais estável** e **pronta para operar**, sem alterar a essência do OpenClaw oficial. Ou seja, você continua usando o OpenClaw original, mas com uma **camada adicional de organização, visual, tradução, praticidade e personalização** criada pela **RobotizAI**.
+
+**Importante:** durante a instalação, a pasta ~/.openclaw pode ser substituída automaticamente pela versão personalizada do sistema. Por isso, se já existir uma instalação anterior no computador, o ideal é fazer backup antes. Seguindo esse cuidado e utilizando apenas os arquivos oficiais, a instalação é uma forma muito mais simples, rápida e confiável de colocar o OpenClaw em funcionamento com qualidade profissional.
+
+⚠️ Sempre realize a instalação pelo **links oficiais** do **OpenClaw Office RobotizAI** desta pagina.
+</details>
+
+---
+
 #### ⚠️ Aviso
 O instalador substitui automaticamente arquivos no diretório `~/.openclaw`, caso já exista uma versão do openclaw instalada, será substituida automaticamente por um novo opeclaw.
 
@@ -112,19 +129,17 @@ iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/ins
 ```
 ---
 
-### 🔐 É seguro instalar o OpenClaw Office RobotizAI?
+### 🤖 Comandos úteis
 <details>
 <summary>(clique para ver mais)</summary>
   
-Sim, o **OpenClaw Office RobotizAI** utiliza o OpenClaw oficial como base, **mantendo o comando original** do sistema, e aplica automaticamente a **estrutura personalizada da RobotizAI** com **interface visual Web UI**, **tradução completa em pt-BR**, **otimizações de performance**, **workspace configurado** e **recursos extras** prontos para uso.
-
-Na prática, isso torna a **instalação mais segura**, **previsível** e **profissional** do que uma configuração manual feita do zero, porque **reduz falhas** comuns como dependências incompletas, etapas esquecidas, **configurações erradas** e **retrabalho técnico**. Em vez de o usuário precisar montar tudo manualmente, o instalador **organiza o ambiente**, **instala os pré-requisitos**, **prepara o OpenClaw corretamente** e aplica a **configuração personalizada** de forma automatizada.
-
-Outro ponto importante é que o sistema foi pensado para **entregar uma experiência mais estável** e **pronta para operar**, sem alterar a essência do OpenClaw oficial. Ou seja, você continua usando o OpenClaw original, mas com uma **camada adicional de organização, visual, tradução, praticidade e personalização** criada pela **RobotizAI**.
-
-**Importante:** durante a instalação, a pasta ~/.openclaw pode ser substituída automaticamente pela versão personalizada do sistema. Por isso, se já existir uma instalação anterior no computador, o ideal é fazer backup antes. Seguindo esse cuidado e utilizando apenas os arquivos oficiais, a instalação é uma forma muito mais simples, rápida e confiável de colocar o OpenClaw em funcionamento com qualidade profissional.
-
-⚠️ Sempre realize a instalação pelo **links oficiais** do **OpenClaw Office RobotizAI** desta pagina.
+#### 🐧 Linux / 🍎 macOS / 🪟 Windows
+- openclaw onboard (Configurações iniciais do openclaw
+- openclaw gateway stop (Finaliza o openclaw)
+- openclaw gateway start (Inicia o openclaw)
+- openclaw gateway restart (Reinicia o openclaw)
+- openclaw dashboard (Abre o openclaw no navegador padrão)
+- openclaw gateway restart && openclaw dashboard (Reinicia o openclaw e Abre o openclaw no navegador padrão)
 </details>
 
 ---
