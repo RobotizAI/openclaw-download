@@ -134,12 +134,12 @@ iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/ins
 <summary>(clique para ver mais)</summary>
   
 #### 🐧 Linux / 🍎 macOS / 🪟 Windows
-- openclaw onboard (Configurações iniciais do openclaw
-- openclaw gateway stop (Finaliza o openclaw)
-- openclaw gateway start (Inicia o openclaw)
-- openclaw gateway restart (Reinicia o openclaw)
-- openclaw dashboard (Abre o openclaw no navegador padrão)
-- openclaw gateway restart && openclaw dashboard (Reinicia o openclaw e Abre o openclaw no navegador padrão)
+- **openclaw onboard** (Configurações iniciais do openclaw)
+- **openclaw gateway stop** (Finaliza o openclaw)
+- **openclaw gateway start** (Inicia o openclaw)
+- **openclaw gateway restart** (Reinicia o openclaw)
+- **openclaw dashboard** (Abre o openclaw no navegador padrão)
+- **openclaw gateway restart && openclaw dashboard** (Reinicia o openclaw e Abre o openclaw no navegador padrão)
 </details>
 
 ---
