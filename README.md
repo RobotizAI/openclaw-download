@@ -142,6 +142,7 @@ iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/ins
 - **openclaw gateway restart && openclaw dashboard** (Reinicia o openclaw e Abre o openclaw no navegador padrão)
 - **openclaw doctor** (Analisa o sistema e identifica problemas)
 - **openclaw doctor --fix** (Aplica correções no sistema)
+- **oenclaw tui** (Abre o openclaw no terminal - Terminal UI)
 </details>
 
 ---
