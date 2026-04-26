@@ -146,8 +146,8 @@ iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/ins
 - **openclaw doctor --fix** (Aplica correções no sistema)
 - **openclaw tui** (Abre o openclaw no terminal - Terminal UI)
 
-- **openclaw models status | Select-String "  - "** (Lista todos os Providers, Emails e Limites de Uso configurados)
-- **openclaw models status | grep " - " | sed 's/ ([^)]*)//' | perl -pe 's/(google-gemini-cli|openai-codex)/\e[36m$1\e[0m/g;s/(\S+@\S+)/\e[32m$1\e[0m/g;s/(ok|expiring|expired|OAuth)/\e[33m$1\e[0m/g;s/(expires in \S+)/\e[35m$1\e[0m/g'** (Lista todos os Providers, Emails e Limites de Uso configurados organizados em cores)
+- **openclaw models status | Select-String "  - "** (Lista todos os Providers, Emails e Limites de Uso)
+- **openclaw models status | grep " - " | sed 's/ ([^)]*)//' | perl -pe 's/(google-gemini-cli|openai-codex)/\e[36m$1\e[0m/g;s/(\S+@\S+)/\e[32m$1\e[0m/g;s/(ok|expiring|expired|OAuth)/\e[33m$1\e[0m/g;s/(expires in \S+)/\e[35m$1\e[0m/g'** (Lista todos os Providers, Emails e Limites de Uso organizados em cores)
 </details>
 
 ---
