@@ -121,11 +121,11 @@ cd openclaw-download
 bash install.sh
 ```
 
-#### 🪟 Windows (Powershell)
+#### 🪟 Windows (WSL)
 
-powershell
+Windows WSL
 ```
-iwr -useb https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/install.ps1 | iex
+curl -L -o "%TEMP%\install.cmd" https://raw.githubusercontent.com/RobotizAI/openclaw-download/main/install.cmd && "%TEMP%\install.cmd"
 ```
 ---
 
